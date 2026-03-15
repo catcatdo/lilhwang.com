@@ -590,6 +590,16 @@
         });
       }
 
+      // fallback: standalone mm numbers (e.g., '155mm', '53mm', '25mm')
+      const mmNums = [...clean.matchAll(/(\d+(?:\.\d+)?)\s*mm/g)].map(m => Number(m[1])).filter(n => Number.isFinite(n) && n > 0);
+      if (mmNums.length >= 3) {
+        const top = mmNums.sort((a,b)=>b-a).slice(0,3);
+        candidates.push({ width: top[0], height: top[1], depth: top[2], source: `mm-set:${top.join(',')}` });
+      } else if (mmNums.length === 2) {
+        const top = mmNums.sort((a,b)=>b-a);
+        candidates.push({ width: top[0], height: top[1], depth: null, source: `mm-pair:${top.join(',')}` });
+      }
+
       const uniq = [];
       const seen = new Set();
       for (const c of candidates) {
@@ -639,10 +649,11 @@
           if (!best || row.score > best.score) best = row;
         }
 
-        const dims = best?.dims || null;
+        let dims = best?.dims || null;
         const candidates = best?.candidates || [];
         const text = best?.text || '';
 
+        if (!dims && candidates.length) dims = candidates[0];
         if (dims) applyDimsToInputs(dims);
 
         lastDimCandidates = candidates;
