@@ -3,40 +3,44 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Simple Parts Generator</title>
+  <title>Fitting Generator v2</title>
   <style>
     :root { --bg:#0f1115; --card:#171a21; --line:#2a2f3a; --txt:#e8ecf1; --muted:#9aa6bc; --acc:#3a7afe; }
     *{box-sizing:border-box}
     body{margin:0;background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
-    .wrap{max-width:1100px;margin:22px auto;padding:0 16px}
+    .wrap{max-width:1200px;margin:20px auto;padding:0 16px}
     .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
     h1,h2{margin:0 0 10px}
     .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
     .dropzone{min-height:200px;border:2px dashed #3b4352;border-radius:12px;display:flex;align-items:center;justify-content:center;text-align:center;padding:16px;color:var(--muted);cursor:pointer;position:relative}
     .dropzone.drag{border-color:var(--acc);background:rgba(58,122,254,.12)}
-    .dropzone img{max-width:100%;max-height:220px;border-radius:8px;object-fit:contain}
+    .dropzone img{max-width:100%;max-height:240px;border-radius:8px;object-fit:contain}
     .hidden{display:none}
     label{display:flex;flex-direction:column;gap:6px;font-size:13px;color:#cdd6e3}
-    input,select,button{border:1px solid #3b4352;background:#10131a;color:var(--txt);border-radius:8px;padding:9px}
+    input,select,button,textarea{border:1px solid #3b4352;background:#10131a;color:var(--txt);border-radius:8px;padding:9px}
+    textarea{min-height:80px;resize:vertical}
     button{cursor:pointer}
     .primary{background:var(--acc);border-color:var(--acc);font-weight:600}
-    .row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-    .preview3d{height:400px;border:1px dashed #3b4352;border-radius:12px;background:#0b0d12}
+    .row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+    .preview3d{height:420px;border:1px dashed #3b4352;border-radius:12px;background:#0b0d12}
     .small{font-size:12px;color:var(--muted)}
     .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:9999}
     .overlay.show{display:flex}
     .loader{background:#131722;border:1px solid #2d3444;border-radius:14px;padding:18px 20px;min-width:280px;text-align:center}
     .spinner{width:28px;height:28px;border:3px solid #2f3850;border-top-color:#7aa2ff;border-radius:50%;margin:0 auto 10px;animation:spin 1s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
+    table{width:100%;border-collapse:collapse}
+    th,td{border-bottom:1px solid #2a2f3a;padding:8px;text-align:left;font-size:13px}
+    .btns{display:flex;gap:8px;flex-wrap:wrap}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>간단 부품 제너레이터</h1>
-    <p class="small">복잡한 모델링 대신, 바로 프린트 가능한 단순 부품(박스/원통/링/브라켓/플레이트) 생성용.</p>
+    <h1>피팅/어댑터 제너레이터 v2</h1>
+    <p class="small">사진 참고 + 자동 치수 추정 + 회전체 프로파일(지름/높이) 편집으로 변형 가능한 부품 생성</p>
 
     <div class="card">
-      <h2>1) 사진 업로드 (선택)</h2>
+      <h2>1) 사진 업로드 (드래그 가능)</h2>
       <div class="grid">
         <div>
           <div id="dropzone" class="dropzone">
@@ -46,43 +50,61 @@
           </div>
         </div>
         <div>
-          <div class="small" id="analysis">이미지를 올리면 대략 치수 추정(참고값)을 시도해.</div>
-          <div class="row" style="margin-top:10px">
-            <label>가로 W (mm)<input id="dimW" type="number" step="0.1" value="120" /></label>
-            <label>세로 H (mm)<input id="dimH" type="number" step="0.1" value="80" /></label>
-            <label>깊이 D (mm)<input id="dimD" type="number" step="0.1" value="40" /></label>
+          <label>이미지 내 텍스트(수동 보정용)
+            <textarea id="ocrText" placeholder="예: 53mm, 25mm, 16mm, 12mm, 15.5mm"></textarea>
+          </label>
+          <div class="btns" style="margin-top:8px">
+            <button id="autoParseBtn">치수 자동추정</button>
+            <button id="presetBtn">샘플 피팅 프리셋 적용</button>
           </div>
+          <div class="small" id="analysis" style="margin-top:10px">사진 업로드 후 자동추정을 눌러봐.</div>
         </div>
       </div>
     </div>
 
     <div class="card">
-      <h2>2) 부품 타입/옵션</h2>
+      <h2>2) 핵심 치수 (mm)</h2>
       <div class="row">
-        <label>부품 타입
-          <select id="partType">
-            <option value="box">박스(Box)</option>
-            <option value="cylinder">원통(Cylinder)</option>
-            <option value="ring">링(Ring)</option>
-            <option value="bracket">L 브라켓(Bracket)</option>
-            <option value="plate">플레이트(Plate)</option>
-          </select>
-        </label>
-        <label>두께/벽두께 (mm)<input id="thickness" type="number" step="0.1" value="3" /></label>
-        <label>구멍 지름 (mm, 선택)<input id="hole" type="number" step="0.1" value="0" /></label>
+        <label>총 길이 L<input id="L" type="number" step="0.1" value="53"/></label>
+        <label>하단 외경 D1<input id="D1" type="number" step="0.1" value="25"/></label>
+        <label>중간 외경 D2<input id="D2" type="number" step="0.1" value="16"/></label>
+        <label>상단 외경 D3<input id="D3" type="number" step="0.1" value="12"/></label>
       </div>
-
-      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
-        <button id="generateBtn" class="primary">제너레이터 실행</button>
-        <button id="wireBtn">와이어프레임 토글</button>
-        <button id="saveJsonBtn">현재 설정 JSON 저장</button>
+      <div class="row" style="margin-top:8px">
+        <label>바브 외경 DB<input id="DB" type="number" step="0.1" value="15.5"/></label>
+        <label>벽두께 T<input id="T" type="number" step="0.1" value="2"/></label>
+        <label>바브 개수<input id="barbCount" type="number" step="1" value="3"/></label>
+        <label>바브 피치<input id="barbPitch" type="number" step="0.1" value="4"/></label>
       </div>
     </div>
 
     <div class="card">
-      <h2>3) 결과</h2>
+      <h2>3) 회전체 프로파일(변형 포인트)</h2>
+      <p class="small">z(mm), d(mm)를 편집하면 형상이 바로 바뀜. (축 기준 회전)</p>
+      <table id="profileTable">
+        <thead><tr><th>#</th><th>z (mm)</th><th>d (mm)</th><th>작업</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="btns" style="margin-top:10px">
+        <button id="addPointBtn">포인트 추가</button>
+        <button id="resetProfileBtn">프로파일 리셋</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>4) 제너레이터</h2>
+      <div class="btns">
+        <button id="generateBtn" class="primary">제너레이터 실행</button>
+        <button id="wireBtn">와이어프레임 토글</button>
+        <button id="saveJsonBtn">JSON 저장</button>
+        <button id="loadSampleBtn">샘플 JSON 불러오기</button>
+      </div>
+      <div class="small" id="resultText" style="margin-top:8px">아직 생성 전</div>
+    </div>
+
+    <div class="card">
+      <h2>5) 결과</h2>
       <div id="preview3d" class="preview3d"></div>
-      <div id="resultText" class="small" style="margin-top:8px">아직 생성 전</div>
     </div>
   </div>
 
@@ -105,6 +127,10 @@
 
     let wire = false;
     let renderer, scene, camera, mesh;
+    let profile = [];
+
+    const ids = ['L','D1','D2','D3','DB','T','barbCount','barbPitch'];
+    const getNum = id => Number(document.getElementById(id).value || 0);
 
     function showLoading(msg){ loadingText.textContent = msg || '처리 중...'; loading.classList.add('show'); }
     function hideLoading(){ loading.classList.remove('show'); }
@@ -118,9 +144,9 @@
       scene = new THREE.Scene();
       scene.background = new THREE.Color(0x0b0d12);
       camera = new THREE.PerspectiveCamera(50, el.clientWidth/el.clientHeight, 0.1, 5000);
-      camera.position.set(200,160,240);
-      scene.add(new THREE.AmbientLight(0xffffff, 0.45));
-      const l = new THREE.DirectionalLight(0xffffff, 1.1); l.position.set(1,2,1); scene.add(l);
+      camera.position.set(130,100,180);
+      scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+      const l = new THREE.DirectionalLight(0xffffff, 1.2); l.position.set(1,2,1); scene.add(l);
     }
 
     function roughEstimateFromImage(file){
@@ -129,13 +155,11 @@
         reader.onload = () => {
           const i = new Image();
           i.onload = () => {
-            // 아주 단순 추정: 긴 변 기준 120mm로 normalize
             const maxSide = Math.max(i.width, i.height);
-            const scale = 120 / maxSide;
-            const w = Math.max(10, i.width * scale);
-            const h = Math.max(10, i.height * scale);
-            const d = Math.max(8, Math.min(w, h) * 0.4);
-            resolve({w,h,d,txt:`이미지 비율 기반 참고 추정: ${w.toFixed(1)} x ${h.toFixed(1)} x ${d.toFixed(1)} mm`});
+            const scale = 53 / maxSide;
+            const L = Math.max(30, i.width * scale);
+            const D1 = Math.max(10, i.height * scale * 0.7);
+            resolve({L,D1,txt:`이미지 비율 참고값: L=${L.toFixed(1)} D1=${D1.toFixed(1)} (수정 권장)`});
           };
           i.src = reader.result;
           img.src = reader.result;
@@ -146,13 +170,120 @@
       });
     }
 
+    function parseDimsFromText(txt){
+      const t = (txt||'').replace(/,/g,'.').toLowerCase();
+      const mm = [...t.matchAll(/(\d+(?:\.\d+)?)\s*mm/g)].map(m=>Number(m[1])).filter(n=>n>0);
+      mm.sort((a,b)=>b-a);
+      if (!mm.length) return null;
+      return {
+        L: mm[0] || 53,
+        D1: mm.find(v=>v>=20 && v<=40) || 25,
+        D2: mm.find(v=>v>=14 && v<=20) || 16,
+        D3: mm.find(v=>v>=10 && v<=14) || 12,
+        DB: mm.find(v=>v>=14 && v<=18) || 15.5
+      };
+    }
+
+    function applyDims(d){
+      if (!d) return;
+      for (const k of ['L','D1','D2','D3','DB']) if (d[k]) document.getElementById(k).value = Number(d[k]).toFixed(1);
+      rebuildProfileFromInputs();
+      analysis.textContent = `자동추정 적용: L=${getNum('L')} / D1=${getNum('D1')} / D2=${getNum('D2')} / D3=${getNum('D3')} / DB=${getNum('DB')}`;
+    }
+
+    function rebuildProfileFromInputs(){
+      const L=getNum('L'), D1=getNum('D1'), D2=getNum('D2'), D3=getNum('D3'), DB=getNum('DB');
+      const n=Math.max(1,Math.floor(getNum('barbCount'))), pitch=Math.max(1,getNum('barbPitch'));
+      profile = [
+        {z:0,d:D1},
+        {z:Math.max(4,L*0.2),d:D1*0.92},
+        {z:Math.max(8,L*0.45),d:D2},
+      ];
+      // barbs near top
+      const start = Math.max(10, L - n*pitch - 6);
+      for(let i=0;i<n;i++){
+        const z1 = start + i*pitch;
+        profile.push({z:z1, d:DB});
+        profile.push({z:Math.min(L-2, z1 + pitch*0.55), d:D3});
+      }
+      profile.push({z:L,d:D3});
+      // unique/sort
+      profile = profile
+        .filter(p=>p.z>=0 && p.z<=L)
+        .sort((a,b)=>a.z-b.z)
+        .map(p=>({z:Number(p.z.toFixed(2)), d:Number(p.d.toFixed(2))}));
+      renderProfileTable();
+    }
+
+    function renderProfileTable(){
+      const tb = document.querySelector('#profileTable tbody');
+      tb.innerHTML='';
+      profile.forEach((p,idx)=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML = `<td>${idx+1}</td>
+          <td><input type="number" step="0.1" value="${p.z}" data-k="z" data-i="${idx}"/></td>
+          <td><input type="number" step="0.1" value="${p.d}" data-k="d" data-i="${idx}"/></td>
+          <td><button data-del="${idx}">삭제</button></td>`;
+        tb.appendChild(tr);
+      });
+    }
+
+    document.querySelector('#profileTable tbody').addEventListener('input',(e)=>{
+      const t=e.target;
+      const i=Number(t.dataset.i), k=t.dataset.k;
+      if (Number.isFinite(i) && k) profile[i][k]=Number(t.value||0);
+    });
+    document.querySelector('#profileTable tbody').addEventListener('click',(e)=>{
+      const idx=e.target.dataset.del;
+      if (idx===undefined) return;
+      profile.splice(Number(idx),1);
+      renderProfileTable();
+    });
+
+    function buildLatheGeometry(){
+      const pts = profile
+        .filter(p=>p.d>0)
+        .sort((a,b)=>a.z-b.z)
+        .map(p=>new THREE.Vector2(Math.max(0.1,p.d/2), p.z));
+      if (pts.length < 2) return new THREE.CylinderGeometry(10,10,30,32);
+      const g = new THREE.LatheGeometry(pts, 96);
+      g.center();
+      return g;
+    }
+
+    function renderPart(){
+      init3D();
+      if (mesh) scene.remove(mesh);
+      const geo = buildLatheGeometry();
+      const mat = new THREE.MeshStandardMaterial({color:0x3a7afe, wireframe:wire, metalness:.05, roughness:.7});
+      mesh = new THREE.Mesh(geo,mat);
+      scene.add(mesh);
+      const L=getNum('L'), D=Math.max(getNum('D1'),getNum('D2'),getNum('D3'),getNum('DB'));
+      camera.position.set(D*2.2, L*1.2, D*2.6);
+      camera.lookAt(0,0,0);
+      renderer.render(scene,camera);
+      document.getElementById('resultText').textContent = `생성 완료: 피팅 프로파일 / L ${L}mm / maxD ${D}mm / 포인트 ${profile.length}개`;
+    }
+
+    async function generateFlow(){
+      showLoading('치수/프로파일 계산 중...');
+      await new Promise(r=>setTimeout(r,280));
+      // ensure profile exists
+      if (!profile.length) rebuildProfileFromInputs();
+      loadingText.textContent='3D 메쉬 생성 중...';
+      await new Promise(r=>setTimeout(r,320));
+      renderPart();
+      hideLoading();
+    }
+
+    // drag/drop
     async function handleFile(file){
       showLoading('이미지 분석 중...');
       const est = await roughEstimateFromImage(file);
-      document.getElementById('dimW').value = est.w.toFixed(1);
-      document.getElementById('dimH').value = est.h.toFixed(1);
-      document.getElementById('dimD').value = est.d.toFixed(1);
-      analysis.textContent = est.txt + ' (자동값은 필요 시 수정해줘)';
+      document.getElementById('L').value = est.L.toFixed(1);
+      document.getElementById('D1').value = est.D1.toFixed(1);
+      analysis.textContent = est.txt;
+      rebuildProfileFromInputs();
       hideLoading();
     }
 
@@ -162,85 +293,30 @@
     ['dragleave','drop'].forEach(e=>dz.addEventListener(e,(ev)=>{ev.preventDefault(); dz.classList.remove('drag');}));
     dz.addEventListener('drop',(ev)=>{ const f=ev.dataTransfer?.files?.[0]; if(f) handleFile(f); });
 
-    function buildGeometry(type, W,H,D,t,hole){
-      if (type==='cylinder') return new THREE.CylinderGeometry(Math.max(W,D)/2, Math.max(W,D)/2, H, 48);
-      if (type==='ring') {
-        const outer = Math.max(W,D)/2, inner = Math.max(1, outer - Math.max(1,t));
-        const shape = new THREE.Shape(); shape.absarc(0,0,outer,0,Math.PI*2,false);
-        const holePath = new THREE.Path(); holePath.absarc(0,0,inner,0,Math.PI*2,true); shape.holes.push(holePath);
-        return new THREE.ExtrudeGeometry(shape,{depth:H,bevelEnabled:false,steps:1});
-      }
-      if (type==='bracket') {
-        const T = Math.max(1,t);
-        const g1 = new THREE.BoxGeometry(W,T,H);
-        const g2 = new THREE.BoxGeometry(T,D,H);
-        g2.translate(-(W/2)+(T/2), (D/2)-(T/2), 0);
-        g1.translate(0, -(D/2)+(T/2), 0);
-        const m = THREE.BufferGeometryUtils ? THREE.BufferGeometryUtils.mergeGeometries([g1,g2]) : g1;
-        return m;
-      }
-      if (type==='plate') {
-        const T = Math.max(1,t);
-        return new THREE.BoxGeometry(W,T,D);
-      }
-      return new THREE.BoxGeometry(W,H,D);
-    }
-
-    // tiny merge fallback (BufferGeometryUtils 없을 때 bracket은 단일 박스로 대체)
-    function safeGeometry(type,W,H,D,t){
-      if (type!=='bracket') return buildGeometry(type,W,H,D,t,0);
-      return new THREE.BoxGeometry(W, Math.max(1,t), H);
-    }
-
-    function renderPart(){
-      init3D();
-      const W=Number(document.getElementById('dimW').value||120);
-      const H=Number(document.getElementById('dimH').value||80);
-      const D=Number(document.getElementById('dimD').value||40);
-      const t=Number(document.getElementById('thickness').value||3);
-      const hole=Number(document.getElementById('hole').value||0);
-      const type=document.getElementById('partType').value;
-
-      if (mesh) scene.remove(mesh);
-      const geo = safeGeometry(type,W,H,D,t,hole);
-      const mat = new THREE.MeshStandardMaterial({color:0x3a7afe, wireframe:wire});
-      mesh = new THREE.Mesh(geo,mat);
-      scene.add(mesh);
-      camera.position.set(Math.max(W,D)*1.8, Math.max(H,D)*1.6, Math.max(W,H,D)*2.1);
-      camera.lookAt(0,0,0);
-      renderer.render(scene,camera);
-
-      document.getElementById('resultText').textContent = `생성 완료: ${type} / ${W} x ${H} x ${D} mm / 두께 ${t}mm`;
-    }
-
-    document.getElementById('generateBtn').addEventListener('click', async ()=>{
-      showLoading('제너레이터 실행 중...');
-      await new Promise(r=>setTimeout(r,500));
-      renderPart();
-      hideLoading();
-    });
-
-    document.getElementById('wireBtn').addEventListener('click', ()=>{ wire=!wire; renderPart(); });
+    // buttons
+    document.getElementById('autoParseBtn').addEventListener('click', ()=> applyDims(parseDimsFromText(document.getElementById('ocrText').value)));
+    document.getElementById('presetBtn').addEventListener('click', ()=> applyDims({L:53,D1:25,D2:16,D3:12,DB:15.5}));
+    document.getElementById('generateBtn').addEventListener('click', generateFlow);
+    document.getElementById('wireBtn').addEventListener('click', ()=>{wire=!wire; renderPart();});
+    document.getElementById('addPointBtn').addEventListener('click', ()=>{ profile.push({z:getNum('L')*0.5,d:getNum('D2')}); renderProfileTable(); });
+    document.getElementById('resetProfileBtn').addEventListener('click', ()=> rebuildProfileFromInputs());
+    document.getElementById('loadSampleBtn').addEventListener('click', ()=>{ document.getElementById('ocrText').value='53mm 25mm 16mm 12mm 15.5mm'; applyDims(parseDimsFromText(document.getElementById('ocrText').value)); generateFlow(); });
 
     document.getElementById('saveJsonBtn').addEventListener('click', ()=>{
       const payload={
-        partType: document.getElementById('partType').value,
-        dimensions_mm:{
-          width:Number(document.getElementById('dimW').value||0),
-          height:Number(document.getElementById('dimH').value||0),
-          depth:Number(document.getElementById('dimD').value||0),
-        },
-        thickness_mm:Number(document.getElementById('thickness').value||0),
-        hole_mm:Number(document.getElementById('hole').value||0),
+        type:'fitting-lathe-v2',
+        params:Object.fromEntries(ids.map(k=>[k,getNum(k)])),
+        profile,
         createdAt:new Date().toISOString()
       };
-      const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a'); a.href=url; a.download='simple-part.json'; a.click();
+      const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a'); a.href=url; a.download='fitting-v2.json'; a.click();
       URL.revokeObjectURL(url);
     });
 
-    // initial render
+    // init
+    rebuildProfileFromInputs();
     init3D();
     renderPart();
   </script>
