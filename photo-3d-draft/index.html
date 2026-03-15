@@ -86,6 +86,15 @@
     <div class="card">
       <h2>2. 기본 치수 (mm)</h2>
       <div class="grid-3">
+        <label>추정 제품명
+          <input id="productName" placeholder="OCR/자동추정 제품명" />
+        </label>
+        <label>추정 바코드
+          <input id="barcode" placeholder="OCR에서 숫자 자동추출" />
+        </label>
+        <label>렌더 모드
+          <select id="shapeMode"><option value="auto">Auto</option><option value="box">Box</option><option value="cylinder">Cylinder</option></select>
+        </label>
         <label>가로(W)
           <input id="dimW" type="number" min="0" step="0.1" placeholder="예: 120" />
         </label>
@@ -420,6 +429,31 @@
       return value;
     }
 
+    const PRODUCT_PRESETS = [
+      { name: '코카콜라 제로 500ml PET', patterns: [/코카.?콜라|coca.?cola/i, /제로|zero/i, /500\s*ml/i], dims: {width: 66, height: 210, depth: 66}, shape: 'cylinder' },
+      { name: '생수 500ml PET', patterns: [/water|생수/i, /500\s*ml/i], dims: {width: 65, height: 205, depth: 65}, shape: 'cylinder' },
+      { name: '캔음료 355ml', patterns: [/355\s*ml/i, /can|캔/i], dims: {width: 66, height: 122, depth: 66}, shape: 'cylinder' },
+      { name: '박스형 소형 패키지', patterns: [/box|박스|package|pkg/i], dims: {width: 120, height: 80, depth: 40}, shape: 'box' }
+    ];
+
+    function inferProductSpecFromText(text) {
+      const t = (text || '').toLowerCase();
+      let best = null;
+      for (const p of PRODUCT_PRESETS) {
+        let score = 0;
+        for (const r of p.patterns) if (r.test(t)) score++;
+        if (!best || score > best.score) best = { preset: p, score };
+      }
+      if (best && best.score > 0) return best.preset;
+      return null;
+    }
+
+    function extractBarcode(text) {
+      const nums = (text || '').match(/\d{8,14}/g);
+      if (!nums || !nums.length) return '';
+      return nums.sort((a,b)=>b.length-a.length)[0];
+    }
+
     function parseDimsFromText(text) {
       const clean = normalizeOcrText(text)
         .replace(/\s+/g, ' ')
@@ -654,7 +688,19 @@
         const text = best?.text || '';
 
         if (!dims && candidates.length) dims = candidates[0];
+
+        const inferred = inferProductSpecFromText(text);
+        if ((!dims || !dims.width || !dims.height) && inferred) {
+          dims = { width: inferred.dims.width, height: inferred.dims.height, depth: inferred.dims.depth };
+        }
         if (dims) applyDimsToInputs(dims);
+
+        if (inferred) {
+          document.getElementById('productName').value = inferred.name;
+          document.getElementById('shapeMode').value = inferred.shape || 'auto';
+        }
+        const bc = extractBarcode(text);
+        if (bc) document.getElementById('barcode').value = bc;
 
         lastDimCandidates = candidates;
         const candText = candidates.length
@@ -666,8 +712,9 @@
           선택된 인식모드: <b>${best?.variant ?? '-'}</b> (confidence: ${best?.confidence?.toFixed?.(1) ?? '-'})<br>
           OCR 추출 텍스트(앞부분): <br><b>${text.slice(0, 240).replace(/</g, '&lt;')}</b><br>
           자동 추정 치수: <b>${dims ? `${dims.width ?? '-'} x ${dims.height ?? '-'} x ${dims.depth ?? '-'} mm` : '인식 실패'}</b><br>
+          제품 자동추정: <b>${inferred ? inferred.name : '미매칭'}</b> / 바코드: <b>${bc || '-'}</b><br>
           후보 치수 TOP3:<br><b>${candText}</b><br>
-          <span class="small">※ OCR 오인식 보정을 위해 전처리 3패스를 비교해 가장 점수 높은 결과를 선택함.</span>
+          <span class="small">※ OCR 오인식 보정을 위해 전처리 3패스를 비교해 가장 점수 높은 결과를 선택함. 미검출 시 제품 프리셋을 자동 대입.</span>
         `;
       } catch (e) {
         console.error(e);
@@ -708,9 +755,21 @@
       const W = Number(document.getElementById('dimW').value || 100);
       const H = Number(document.getElementById('dimH').value || 100);
       const D = Number(document.getElementById('dimD').value || 100);
+      const mode = document.getElementById('shapeMode')?.value || 'auto';
       if (mesh3d) scene3d.remove(mesh3d);
-      const geo = new THREE.BoxGeometry(W, H, D);
       const mat = new THREE.MeshStandardMaterial({ color: 0x3a7afe, wireframe: wireMode });
+      let geo;
+      let actualMode = mode;
+      if (mode === 'auto') {
+        const pn = (document.getElementById('productName')?.value || '').toLowerCase();
+        actualMode = /콜라|cola|pet|bottle|캔|can|생수/.test(pn) ? 'cylinder' : 'box';
+      }
+      if (actualMode === 'cylinder') {
+        const dia = Math.max(W, D);
+        geo = new THREE.CylinderGeometry(dia/2, dia/2, H, 48);
+      } else {
+        geo = new THREE.BoxGeometry(W, H, D);
+      }
       mesh3d = new THREE.Mesh(geo, mat);
       scene3d.add(mesh3d);
       camera3d.position.set(W*1.3, H*1.3, D*1.8);
