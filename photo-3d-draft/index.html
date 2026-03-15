@@ -1,0 +1,641 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Photo → 3D Print Draft</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; background:#0f1115; color:#e8ecf1; }
+    .wrap { max-width: 1100px; margin: 24px auto; padding: 0 16px; }
+    .card { background:#171a21; border:1px solid #2a2f3a; border-radius:14px; padding:16px; margin-bottom:16px; }
+    h1,h2 { margin: 0 0 12px; }
+    .row { display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
+    .preview { width:100%; min-height:260px; border:1px dashed #3b4352; border-radius:10px; display:flex; align-items:center; justify-content:center; overflow:hidden; background:#0b0d12; position:relative; }
+    .preview img { max-width:100%; max-height:360px; object-fit:contain; }
+    .preview-origin img { display:block; }
+    #roiCanvas { position:absolute; inset:0; width:100%; height:100%; pointer-events:auto; cursor:crosshair; }
+    input[type="file"], button, input, select { border-radius:8px; border:1px solid #3b4352; background:#10131a; color:#e8ecf1; padding:10px; }
+    button { cursor:pointer; }
+    button.primary { background:#3a7afe; border-color:#3a7afe; font-weight:600; }
+    .meta { font-size:14px; color:#b6c0d0; line-height:1.6; }
+    .grid-3 { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:10px; }
+    .grid-6 { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:10px; }
+    label { display:flex; flex-direction:column; gap:6px; font-size:14px; color:#cdd6e3; }
+    .small { font-size:12px; color:#9aa6bc; }
+    .cand-apply-btn { margin-left:6px; padding:4px 8px; font-size:12px; border-radius:6px; border:1px solid #3b4352; background:#10131a; color:#e8ecf1; cursor:pointer; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>사진 → 3D 프린트 도안 (초안)</h1>
+    <p class="small">1) 사진 업로드 → 2) 배경 제거(초안) → 3) 면 치수 입력. (실서비스에선 AI 세그멘테이션 모델로 교체 권장)</p>
+
+    <div class="card">
+      <h2>1. 사진 업로드 / 분석</h2>
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:12px;">
+        <input id="fileInput" type="file" accept="image/*" />
+        <button id="analyzeBtn">분석</button>
+        <button id="removeBgBtn" class="primary">배경 제거</button>
+        <button id="ocrDimBtn">치수 자동인식(OCR)</button>
+      </div>
+      <div class="grid-3" style="margin-bottom:12px;">
+        <label>OCR 시작 X(px)
+          <input id="roiX" type="number" min="0" step="1" value="0" />
+        </label>
+        <label>OCR 시작 Y(px)
+          <input id="roiY" type="number" min="0" step="1" value="0" />
+        </label>
+        <label>OCR 영역 폭 x 높이(px)
+          <input id="roiWH" placeholder="예: 800x300 (비우면 전체)" />
+        </label>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:8px;">
+        <button id="roiResetBtn">영역 초기화</button>
+        <button id="roiFullBtn">전체 영역으로</button>
+        <span class="small">원본 이미지 위에서 마우스로 드래그하면 OCR 영역을 바로 지정할 수 있어.</span>
+      </div>
+      <div class="row">
+        <div>
+          <div class="small" style="margin-bottom:6px;">원본 (드래그로 OCR 영역 지정)</div>
+          <div class="preview preview-origin">
+            <img id="originalPreview" alt="원본 미리보기" />
+            <canvas id="roiCanvas"></canvas>
+          </div>
+        </div>
+        <div>
+          <div class="small" style="margin-bottom:6px;">배경 제거 결과</div>
+          <div class="preview"><img id="resultPreview" alt="결과 미리보기" /></div>
+        </div>
+      </div>
+      <div id="analysis" class="meta" style="margin-top:12px;">아직 분석 전</div>
+    </div>
+
+    <div class="card">
+      <h2>2. 기본 치수 (mm)</h2>
+      <div class="grid-3">
+        <label>가로(W)
+          <input id="dimW" type="number" min="0" step="0.1" placeholder="예: 120" />
+        </label>
+        <label>세로(H)
+          <input id="dimH" type="number" min="0" step="0.1" placeholder="예: 80" />
+        </label>
+        <label>깊이(D)
+          <input id="dimD" type="number" min="0" step="0.1" placeholder="예: 40" />
+        </label>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>3. 각 면 치수/메모</h2>
+      <div class="grid-6">
+        <label>정면 (Front)
+          <input id="front" placeholder="예: 라벨 폭 60, 높이 30" />
+        </label>
+        <label>후면 (Back)
+          <input id="back" placeholder="예: 각인 영역 50x20" />
+        </label>
+        <label>좌측 (Left)
+          <input id="left" placeholder="예: 곡률 있음" />
+        </label>
+        <label>우측 (Right)
+          <input id="right" placeholder="예: 버튼 홀 8mm" />
+        </label>
+        <label>상단 (Top)
+          <input id="top" placeholder="예: 캡 직경 28" />
+        </label>
+        <label>하단 (Bottom)
+          <input id="bottom" placeholder="예: 두께 최소 2.4" />
+        </label>
+      </div>
+      <div style="margin-top:12px; display:flex; gap:10px;">
+        <button id="saveJsonBtn">입력값 JSON 저장</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const originalPreview = document.getElementById('originalPreview');
+    const resultPreview = document.getElementById('resultPreview');
+    const analysisEl = document.getElementById('analysis');
+    const roiCanvas = document.getElementById('roiCanvas');
+    const roiCtx = roiCanvas.getContext('2d');
+
+    let originalImage = null;
+    let originalDataUrl = '';
+    let roiRect = null;
+    let dragStart = null;
+    let lastDimCandidates = [];
+
+    function loadImageFromDataUrl(dataUrl) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = dataUrl;
+      });
+    }
+
+    function readFileAsDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const fr = new FileReader();
+        fr.onload = () => resolve(fr.result);
+        fr.onerror = reject;
+        fr.readAsDataURL(file);
+      });
+    }
+
+    function getDisplayRect() {
+      if (!originalImage) return null;
+      const cw = roiCanvas.width, ch = roiCanvas.height;
+      const iw = originalImage.width, ih = originalImage.height;
+      const scale = Math.min(cw / iw, ch / ih);
+      const w = iw * scale;
+      const h = ih * scale;
+      const x = (cw - w) / 2;
+      const y = (ch - h) / 2;
+      return { x, y, w, h, scale };
+    }
+
+    function drawRoiOverlay() {
+      roiCtx.clearRect(0, 0, roiCanvas.width, roiCanvas.height);
+      const display = getDisplayRect();
+      if (!display) return;
+
+      roiCtx.strokeStyle = '#4ea1ff';
+      roiCtx.lineWidth = 2;
+      roiCtx.strokeRect(display.x, display.y, display.w, display.h);
+
+      if (roiRect) {
+        const x = display.x + roiRect.x * display.scale;
+        const y = display.y + roiRect.y * display.scale;
+        const w = roiRect.w * display.scale;
+        const h = roiRect.h * display.scale;
+
+        roiCtx.fillStyle = 'rgba(78,161,255,0.16)';
+        roiCtx.strokeStyle = '#3a7afe';
+        roiCtx.lineWidth = 2;
+        roiCtx.fillRect(x, y, w, h);
+        roiCtx.strokeRect(x, y, w, h);
+      }
+    }
+
+    function syncCanvasSize() {
+      const rect = roiCanvas.getBoundingClientRect();
+      roiCanvas.width = Math.max(1, Math.floor(rect.width));
+      roiCanvas.height = Math.max(1, Math.floor(rect.height));
+      drawRoiOverlay();
+    }
+
+    function applyRoiToInputs() {
+      if (!roiRect) return;
+      document.getElementById('roiX').value = Math.round(roiRect.x);
+      document.getElementById('roiY').value = Math.round(roiRect.y);
+      document.getElementById('roiWH').value = `${Math.round(roiRect.w)}x${Math.round(roiRect.h)}`;
+    }
+
+    fileInput.addEventListener('change', async () => {
+      const file = fileInput.files?.[0];
+      if (!file) return;
+      originalDataUrl = await readFileAsDataUrl(file);
+      originalImage = await loadImageFromDataUrl(originalDataUrl);
+      originalPreview.src = originalDataUrl;
+      resultPreview.src = '';
+      roiRect = null;
+      analysisEl.textContent = '이미지 로드 완료. 분석 버튼을 눌러줘.';
+      setTimeout(syncCanvasSize, 50);
+    });
+
+    window.addEventListener('resize', syncCanvasSize);
+    originalPreview.addEventListener('load', syncCanvasSize);
+
+    roiCanvas.addEventListener('mousedown', (e) => {
+      if (!originalImage) return;
+      const display = getDisplayRect();
+      if (!display) return;
+
+      const rect = roiCanvas.getBoundingClientRect();
+      const cx = e.clientX - rect.left;
+      const cy = e.clientY - rect.top;
+      if (cx < display.x || cy < display.y || cx > display.x + display.w || cy > display.y + display.h) return;
+
+      dragStart = { cx, cy };
+    });
+
+    roiCanvas.addEventListener('mousemove', (e) => {
+      if (!dragStart || !originalImage) return;
+      const display = getDisplayRect();
+      if (!display) return;
+
+      const rect = roiCanvas.getBoundingClientRect();
+      const cx = Math.max(display.x, Math.min(e.clientX - rect.left, display.x + display.w));
+      const cy = Math.max(display.y, Math.min(e.clientY - rect.top, display.y + display.h));
+
+      const x1 = Math.min(dragStart.cx, cx);
+      const y1 = Math.min(dragStart.cy, cy);
+      const x2 = Math.max(dragStart.cx, cx);
+      const y2 = Math.max(dragStart.cy, cy);
+
+      roiRect = {
+        x: (x1 - display.x) / display.scale,
+        y: (y1 - display.y) / display.scale,
+        w: (x2 - x1) / display.scale,
+        h: (y2 - y1) / display.scale,
+      };
+
+      drawRoiOverlay();
+      applyRoiToInputs();
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (!dragStart) return;
+      dragStart = null;
+      if (roiRect && (roiRect.w < 4 || roiRect.h < 4)) roiRect = null;
+      drawRoiOverlay();
+      applyRoiToInputs();
+    });
+
+    document.getElementById('roiResetBtn').addEventListener('click', () => {
+      roiRect = null;
+      document.getElementById('roiX').value = 0;
+      document.getElementById('roiY').value = 0;
+      document.getElementById('roiWH').value = '';
+      drawRoiOverlay();
+    });
+
+    document.getElementById('roiFullBtn').addEventListener('click', () => {
+      if (!originalImage) return;
+      roiRect = { x: 0, y: 0, w: originalImage.width, h: originalImage.height };
+      applyRoiToInputs();
+      drawRoiOverlay();
+    });
+
+    function applyInputsToRoi() {
+      if (!originalImage) return;
+      const x = Number(document.getElementById('roiX').value || 0);
+      const y = Number(document.getElementById('roiY').value || 0);
+      const wh = (document.getElementById('roiWH').value || '').toLowerCase().trim();
+      const m = wh.match(/(\d+)\s*[x×]\s*(\d+)/);
+      if (!m) {
+        roiRect = null;
+        drawRoiOverlay();
+        return;
+      }
+      const w = Number(m[1]);
+      const h = Number(m[2]);
+      const sx = Math.max(0, Math.min(x, originalImage.width - 1));
+      const sy = Math.max(0, Math.min(y, originalImage.height - 1));
+      const sw = Math.max(1, Math.min(w, originalImage.width - sx));
+      const sh = Math.max(1, Math.min(h, originalImage.height - sy));
+      roiRect = { x: sx, y: sy, w: sw, h: sh };
+      drawRoiOverlay();
+    }
+
+    document.getElementById('roiX').addEventListener('input', applyInputsToRoi);
+    document.getElementById('roiY').addEventListener('input', applyInputsToRoi);
+    document.getElementById('roiWH').addEventListener('input', applyInputsToRoi);
+
+    document.getElementById('analyzeBtn').addEventListener('click', () => {
+      if (!originalImage) return alert('먼저 이미지를 올려줘.');
+      const { width, height } = originalImage;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(originalImage, 0, 0);
+
+      const imgData = ctx.getImageData(0, 0, width, height);
+      const data = imgData.data;
+
+      // 단순 전경 추정(흰 배경 가정): 너무 밝은 픽셀 제외
+      let minX = width, minY = height, maxX = 0, maxY = 0, count = 0;
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const i = (y * width + x) * 4;
+          const r = data[i], g = data[i+1], b = data[i+2];
+          const isBgLike = r > 240 && g > 240 && b > 240;
+          if (!isBgLike) {
+            count++;
+            if (x < minX) minX = x;
+            if (y < minY) minY = y;
+            if (x > maxX) maxX = x;
+            if (y > maxY) maxY = y;
+          }
+        }
+      }
+
+      const bbox = count > 0 ? `${minX},${minY} ~ ${maxX},${maxY}` : '감지 실패';
+      analysisEl.innerHTML = `
+        해상도: <b>${width} x ${height}</b><br>
+        전경 추정 픽셀: <b>${count.toLocaleString()}</b><br>
+        전경 BBox(추정): <b>${bbox}</b><br>
+        <span class="small">※ 현재는 흰 배경 기반 단순 분석. 이후 AI 세그멘테이션(U2Net/SAM)으로 교체 권장.</span>
+      `;
+    });
+
+    document.getElementById('removeBgBtn').addEventListener('click', () => {
+      if (!originalImage) return alert('먼저 이미지를 올려줘.');
+
+      const { width, height } = originalImage;
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(originalImage, 0, 0);
+
+      const imgData = ctx.getImageData(0, 0, width, height);
+      const data = imgData.data;
+
+      // 초안용 배경 제거: 밝은 픽셀을 투명 처리
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i], g = data[i + 1], b = data[i + 2];
+        const isBgLike = r > 240 && g > 240 && b > 240;
+        if (isBgLike) data[i + 3] = 0;
+      }
+
+      ctx.putImageData(imgData, 0, 0);
+      resultPreview.src = canvas.toDataURL('image/png');
+    });
+
+    function toMm(value, unit) {
+      if (!Number.isFinite(value)) return null;
+      if (unit === 'cm') return value * 10;
+      if (unit === 'm') return value * 1000;
+      return value;
+    }
+
+    function parseDimsFromText(text) {
+      const clean = normalizeOcrText(text)
+        .replace(/\s+/g, ' ')
+        .toLowerCase();
+
+      const triple = clean.match(/(\d+(?:\.\d+)?)\s*x\s*(\d+(?:\.\d+)?)\s*x\s*(\d+(?:\.\d+)?)(?:\s*(mm|cm|m))?/);
+      if (triple) {
+        const unit = triple[4] || 'mm';
+        return {
+          width: toMm(Number(triple[1]), unit),
+          height: toMm(Number(triple[2]), unit),
+          depth: toMm(Number(triple[3]), unit),
+          mode: 'triple',
+          unit,
+        };
+      }
+
+      const pairs = clean.match(/(\d+(?:\.\d+)?)\s*x\s*(\d+(?:\.\d+)?)(?:\s*(mm|cm|m))?/);
+      if (pairs) {
+        const unit = pairs[3] || 'mm';
+        return {
+          width: toMm(Number(pairs[1]), unit),
+          height: toMm(Number(pairs[2]), unit),
+          depth: null,
+          mode: 'pair',
+          unit,
+        };
+      }
+
+      const labeled = {
+        width: clean.match(/(?:w|width|가로)\s*[:=]?\s*(\d+(?:\.\d+)?)(?:\s*(mm|cm|m))?/),
+        height: clean.match(/(?:h|height|세로|높이)\s*[:=]?\s*(\d+(?:\.\d+)?)(?:\s*(mm|cm|m))?/),
+        depth: clean.match(/(?:d|depth|깊이|두께)\s*[:=]?\s*(\d+(?:\.\d+)?)(?:\s*(mm|cm|m))?/),
+      };
+
+      const out = { width: null, height: null, depth: null, mode: 'labeled', unit: 'mm' };
+      for (const [k, m] of Object.entries(labeled)) {
+        if (!m) continue;
+        const unit = m[2] || 'mm';
+        out[k] = toMm(Number(m[1]), unit);
+      }
+
+      if (out.width || out.height || out.depth) return out;
+      return null;
+    }
+
+    function getOcrTargetImage() {
+      const x = Number(document.getElementById('roiX').value || 0);
+      const y = Number(document.getElementById('roiY').value || 0);
+      const wh = (document.getElementById('roiWH').value || '').toLowerCase().trim();
+      const m = wh.match(/(\d+)\s*[x×]\s*(\d+)/);
+
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+
+      let sx = 0, sy = 0, sw = originalImage.width, sh = originalImage.height;
+
+      if (roiRect) {
+        sx = Math.max(0, Math.floor(roiRect.x));
+        sy = Math.max(0, Math.floor(roiRect.y));
+        sw = Math.max(1, Math.floor(roiRect.w));
+        sh = Math.max(1, Math.floor(roiRect.h));
+      } else if (m) {
+        const w = Number(m[1]);
+        const h = Number(m[2]);
+        sx = Math.max(0, Math.min(x, originalImage.width - 1));
+        sy = Math.max(0, Math.min(y, originalImage.height - 1));
+        sw = Math.max(1, Math.min(w, originalImage.width - sx));
+        sh = Math.max(1, Math.min(h, originalImage.height - sy));
+      }
+
+      canvas.width = sw;
+      canvas.height = sh;
+      ctx.drawImage(originalImage, sx, sy, sw, sh, 0, 0, sw, sh);
+
+      const roiText = (sx === 0 && sy === 0 && sw === originalImage.width && sh === originalImage.height)
+        ? `전체(${originalImage.width}x${originalImage.height})`
+        : `${sx},${sy},${sw},${sh}`;
+
+      return { url: canvas.toDataURL('image/png'), roi: roiText };
+    }
+
+    function normalizeOcrText(text) {
+      return (text || '')
+        .replace(/[Oo]/g, '0')
+        .replace(/[Il]/g, '1')
+        .replace(/[S]/g, '5')
+        .replace(/,/g, '.')
+        .replace(/[xX×]/g, 'x');
+    }
+
+    function makeOcrVariants(dataUrl) {
+      const img = new Image();
+      img.src = dataUrl;
+      return new Promise((resolve) => {
+        img.onload = () => {
+          const variants = [];
+
+          const mk = (name, drawFn) => {
+            const c = document.createElement('canvas');
+            c.width = Math.max(1, Math.floor(img.width * 2));
+            c.height = Math.max(1, Math.floor(img.height * 2));
+            const ctx = c.getContext('2d');
+            ctx.imageSmoothingEnabled = true;
+            ctx.drawImage(img, 0, 0, c.width, c.height);
+            drawFn?.(ctx, c.width, c.height);
+            variants.push({ name, url: c.toDataURL('image/png') });
+          };
+
+          mk('원본확대');
+          mk('흑백강조', (ctx, w, h) => {
+            const d = ctx.getImageData(0, 0, w, h);
+            for (let i = 0; i < d.data.length; i += 4) {
+              const r = d.data[i], g = d.data[i+1], b = d.data[i+2];
+              const y = 0.299*r + 0.587*g + 0.114*b;
+              const v = y > 170 ? 255 : 0;
+              d.data[i] = d.data[i+1] = d.data[i+2] = v;
+            }
+            ctx.putImageData(d, 0, 0);
+          });
+          mk('반전강조', (ctx, w, h) => {
+            const d = ctx.getImageData(0, 0, w, h);
+            for (let i = 0; i < d.data.length; i += 4) {
+              const r = d.data[i], g = d.data[i+1], b = d.data[i+2];
+              const y = 0.299*r + 0.587*g + 0.114*b;
+              const v = y > 150 ? 0 : 255;
+              d.data[i] = d.data[i+1] = d.data[i+2] = v;
+            }
+            ctx.putImageData(d, 0, 0);
+          });
+
+          resolve(variants);
+        };
+      });
+    }
+
+    function applyDimsToInputs(dims) {
+      if (!dims) return;
+      if (dims.width != null) document.getElementById('dimW').value = Number(dims.width).toFixed(1);
+      if (dims.height != null) document.getElementById('dimH').value = Number(dims.height).toFixed(1);
+      if (dims.depth != null) document.getElementById('dimD').value = Number(dims.depth).toFixed(1);
+    }
+
+    function extractDimCandidates(text) {
+      const clean = normalizeOcrText(text).toLowerCase();
+      const candidates = [];
+
+      const tripleRe = /(\d+(?:\.\d+)?)\s*x\s*(\d+(?:\.\d+)?)\s*x\s*(\d+(?:\.\d+)?)(?:\s*(mm|cm|m))?/g;
+      let m;
+      while ((m = tripleRe.exec(clean)) !== null) {
+        const unit = m[4] || 'mm';
+        candidates.push({
+          width: toMm(Number(m[1]), unit),
+          height: toMm(Number(m[2]), unit),
+          depth: toMm(Number(m[3]), unit),
+          source: m[0],
+        });
+      }
+
+      const pairRe = /(\d+(?:\.\d+)?)\s*x\s*(\d+(?:\.\d+)?)(?:\s*(mm|cm|m))?/g;
+      while ((m = pairRe.exec(clean)) !== null) {
+        const unit = m[3] || 'mm';
+        candidates.push({
+          width: toMm(Number(m[1]), unit),
+          height: toMm(Number(m[2]), unit),
+          depth: null,
+          source: m[0],
+        });
+      }
+
+      const uniq = [];
+      const seen = new Set();
+      for (const c of candidates) {
+        const key = `${c.width}|${c.height}|${c.depth ?? '-'}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        uniq.push(c);
+        if (uniq.length >= 3) break;
+      }
+      return uniq;
+    }
+
+    analysisEl.addEventListener('click', (e) => {
+      const btn = e.target.closest?.('.cand-apply-btn');
+      if (!btn) return;
+      const idx = Number(btn.getAttribute('data-cand-idx'));
+      const picked = lastDimCandidates[idx];
+      if (!picked) return;
+      applyDimsToInputs(picked);
+
+      const msg = document.createElement('div');
+      msg.className = 'small';
+      msg.style.marginTop = '6px';
+      msg.textContent = `후보 ${idx + 1} 적용 완료: ${picked.width ?? '-'} x ${picked.height ?? '-'} x ${picked.depth ?? '-'} mm`;
+      analysisEl.appendChild(msg);
+    });
+
+    document.getElementById('ocrDimBtn').addEventListener('click', async () => {
+      if (!originalImage) return alert('먼저 이미지를 올려줘.');
+      if (!window.Tesseract) return alert('OCR 라이브러리를 불러오지 못했어.');
+
+      analysisEl.innerHTML = 'OCR로 치수 텍스트 인식 중... (전처리 3패스, 보통 8~25초)';
+      try {
+        const target = getOcrTargetImage();
+        const variants = await makeOcrVariants(target.url);
+
+        let best = null;
+        for (const v of variants) {
+          const { data } = await Tesseract.recognize(v.url, 'eng+kor');
+          const text = data?.text || '';
+          const dims = parseDimsFromText(text);
+          const candidates = extractDimCandidates(text);
+          const confidence = Number(data?.confidence || 0);
+
+          const score = (dims ? 1000 : 0) + candidates.length * 100 + confidence;
+          const row = { variant: v.name, text, dims, candidates, confidence, score };
+          if (!best || row.score > best.score) best = row;
+        }
+
+        const dims = best?.dims || null;
+        const candidates = best?.candidates || [];
+        const text = best?.text || '';
+
+        if (dims) applyDimsToInputs(dims);
+
+        lastDimCandidates = candidates;
+        const candText = candidates.length
+          ? candidates.map((c, i) => `${i + 1}) ${c.width ?? '-'} x ${c.height ?? '-'} x ${c.depth ?? '-'} mm (${c.source}) <button class="cand-apply-btn" data-cand-idx="${i}">이 후보 적용</button>`).join('<br>')
+          : '후보 없음';
+
+        analysisEl.innerHTML = `
+          OCR 영역: <b>${target.roi}</b><br>
+          선택된 인식모드: <b>${best?.variant ?? '-'}</b> (confidence: ${best?.confidence?.toFixed?.(1) ?? '-'})<br>
+          OCR 추출 텍스트(앞부분): <br><b>${text.slice(0, 240).replace(/</g, '&lt;')}</b><br>
+          자동 추정 치수: <b>${dims ? `${dims.width ?? '-'} x ${dims.height ?? '-'} x ${dims.depth ?? '-'} mm` : '인식 실패'}</b><br>
+          후보 치수 TOP3:<br><b>${candText}</b><br>
+          <span class="small">※ OCR 오인식 보정을 위해 전처리 3패스를 비교해 가장 점수 높은 결과를 선택함.</span>
+        `;
+      } catch (e) {
+        console.error(e);
+        analysisEl.innerHTML = 'OCR 인식 중 오류가 발생했어. 이미지 해상도/문자 선명도를 높여서 다시 시도해줘.';
+      }
+    });
+
+    document.getElementById('saveJsonBtn').addEventListener('click', () => {
+      const payload = {
+        dimensions_mm: {
+          width: Number(document.getElementById('dimW').value || 0),
+          height: Number(document.getElementById('dimH').value || 0),
+          depth: Number(document.getElementById('dimD').value || 0),
+        },
+        faces: {
+          front: document.getElementById('front').value,
+          back: document.getElementById('back').value,
+          left: document.getElementById('left').value,
+          right: document.getElementById('right').value,
+          top: document.getElementById('top').value,
+          bottom: document.getElementById('bottom').value,
+        },
+        createdAt: new Date().toISOString(),
+      };
+
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'photo-3d-input.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  </script>
+</body>
+</html>
