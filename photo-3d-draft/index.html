@@ -509,13 +509,17 @@
               <label>이미지 속 치수 텍스트
                 <textarea id="ocrText" placeholder="예: 53mm, 25mm, 16mm, 12mm, 15.5mm"></textarea>
               </label>
+              <label style="margin-top:10px">부품 설명
+                <textarea id="partDescription" placeholder="예: 40 to 20 레듀샤, 25 to 16 어댑터, 16mm 호스 바브"></textarea>
+              </label>
               <div class="btns" style="margin-top:10px">
                 <button id="autoParseBtn">텍스트에서 자동 추정</button>
+                <button id="descParseBtn">설명에서 형태 추정</button>
                 <button id="presetBtn">샘플 피팅 프리셋</button>
               </div>
               <div id="analysis" class="analysisState">사진을 올리거나 샘플을 적용하면 여기에 분석 결과가 나옵니다.</div>
               <div class="tips">
-                긴 길이를 먼저 적고 큰 외경 순서대로 나열하면 추정이 더 안정적입니다.
+                치수 텍스트가 없으면 `40 to 20 레듀샤`처럼 설명만 넣어도 기본 외경과 길이를 추정해 볼 수 있습니다.
               </div>
             </div>
           </div>
@@ -582,7 +586,7 @@
         <div class="card">
           <div class="cardHead">
             <h2>5) 3D 결과</h2>
-            <span class="small">드래그로 회전, 휠로 확대</span>
+            <span class="small">드래그로 360도 회전, 휠로 확대</span>
           </div>
           <div id="preview3d" class="preview3d"></div>
         </div>
@@ -619,6 +623,7 @@
     const statusValue = document.getElementById('statusValue');
     const statusHint = document.getElementById('statusHint');
     const summaryList = document.getElementById('summaryList');
+    const partDescription = document.getElementById('partDescription');
 
     let wire = false;
     let renderer, scene, camera, mesh, pivot;
@@ -627,8 +632,9 @@
     let isDragging = false;
     let dragStartX = 0;
     let dragStartY = 0;
-    let baseRotX = -0.45;
-    let baseRotY = 0.75;
+    let orbitYaw = 0.75;
+    let orbitPitch = 0.25;
+    let orbitRadius = 190;
 
     const ids = ['L', 'D1', 'D2', 'D3', 'DB', 'T', 'barbCount', 'barbPitch'];
     const getNum = id => Number(document.getElementById(id).value || 0);
@@ -665,8 +671,6 @@
       camera.position.set(150, 100, 190);
 
       pivot = new THREE.Group();
-      pivot.rotation.x = baseRotX;
-      pivot.rotation.y = baseRotY;
       scene.add(pivot);
       orbitTarget = new THREE.Vector3(0, 0, 0);
 
@@ -701,12 +705,9 @@
       const dy = event.clientY - dragStartY;
       dragStartX = event.clientX;
       dragStartY = event.clientY;
-      baseRotY += dx * 0.01;
-      baseRotX = Math.max(-1.35, Math.min(1.35, baseRotX + dy * 0.01));
-      pivot.rotation.x = baseRotX;
-      pivot.rotation.y = baseRotY;
-      camera.lookAt(orbitTarget);
-      renderer.render(scene, camera);
+      orbitYaw -= dx * 0.01;
+      orbitPitch = Math.max(-1.52, Math.min(1.52, orbitPitch - dy * 0.01));
+      updateCameraOrbit();
     }
 
     function onPointerUp() {
@@ -715,10 +716,8 @@
 
     function onWheel(event) {
       event.preventDefault();
-      const nextZ = camera.position.z + event.deltaY * 0.12;
-      camera.position.z = Math.max(70, Math.min(360, nextZ));
-      camera.lookAt(orbitTarget);
-      renderer.render(scene, camera);
+      orbitRadius = Math.max(24, Math.min(900, orbitRadius + event.deltaY * 0.12));
+      updateCameraOrbit();
     }
 
     function handleResize() {
@@ -727,6 +726,17 @@
       renderer.setSize(el.clientWidth, el.clientHeight);
       camera.aspect = el.clientWidth / el.clientHeight;
       camera.updateProjectionMatrix();
+      updateCameraOrbit();
+    }
+
+    function updateCameraOrbit() {
+      if (!camera || !renderer || !orbitTarget) return;
+      const cosPitch = Math.cos(orbitPitch);
+      camera.position.set(
+        orbitTarget.x + orbitRadius * cosPitch * Math.sin(orbitYaw),
+        orbitTarget.y + orbitRadius * Math.sin(orbitPitch),
+        orbitTarget.z + orbitRadius * cosPitch * Math.cos(orbitYaw)
+      );
       camera.lookAt(orbitTarget);
       renderer.render(scene, camera);
     }
@@ -781,6 +791,58 @@
       };
     }
 
+    function parseDimsFromDescription(text) {
+      const normalized = (text || '').trim().toLowerCase();
+      if (!normalized) return null;
+
+      const reducerMatch = normalized.match(/(\d+(?:\.\d+)?)\s*(?:to|->|→|\/)\s*(\d+(?:\.\d+)?)/);
+      const numberMatches = [...normalized.matchAll(/(\d+(?:\.\d+)?)/g)].map(match => Number(match[1]));
+      const isReducer = /(reducer|reducing|adapter|adaptor|레듀샤|레듀서|어댑터)/.test(normalized);
+      const isBarb = /(barb|호스|hose)/.test(normalized);
+
+      if (reducerMatch || (isReducer && numberMatches.length >= 2)) {
+        const a = reducerMatch ? Number(reducerMatch[1]) : numberMatches[0];
+        const b = reducerMatch ? Number(reducerMatch[2]) : numberMatches[1];
+        const large = Math.max(a, b);
+        const small = Math.min(a, b);
+        return {
+          L: Math.max(28, Number((large * 1.5).toFixed(1))),
+          D1: large,
+          D2: Number((((large + small) / 2) * 0.92).toFixed(1)),
+          D3: small,
+          DB: small,
+          note: `${large}에서 ${small}으로 줄어드는 레듀서 형태로 해석했어요.`
+        };
+      }
+
+      if (isBarb && numberMatches.length >= 1) {
+        const barb = numberMatches[0];
+        return {
+          L: Math.max(24, Number((barb * 2.8).toFixed(1))),
+          D1: Number((barb * 1.35).toFixed(1)),
+          D2: Number((barb * 1.12).toFixed(1)),
+          D3: Number((barb * 0.95).toFixed(1)),
+          DB: barb,
+          note: `${barb}mm 바브 중심 형태로 해석했어요.`
+        };
+      }
+
+      if (numberMatches.length >= 2) {
+        const large = Math.max(numberMatches[0], numberMatches[1]);
+        const small = Math.min(numberMatches[0], numberMatches[1]);
+        return {
+          L: Math.max(28, Number((large * 1.4).toFixed(1))),
+          D1: large,
+          D2: Number((((large + small) / 2) * 0.9).toFixed(1)),
+          D3: small,
+          DB: small,
+          note: '설명 속 숫자 두 개를 기준으로 축대칭 어댑터 초안을 만들었어요.'
+        };
+      }
+
+      return null;
+    }
+
     function applyDims(nextDims, sourceLabel) {
       if (!nextDims) {
         setAnalysis('인식 가능한 숫자를 찾지 못했어요. 예시처럼 `53mm 25mm 16mm 12mm 15.5mm` 형태로 입력해 보세요.', 'warn');
@@ -796,8 +858,11 @@
 
       rebuildProfileFromInputs();
       updateSummary();
+      const descriptionText = partDescription.value.trim();
+      const descriptionSuffix = descriptionText ? ` / 설명: ${descriptionText}` : '';
+      const extraNote = nextDims.note ? ` ${nextDims.note}` : '';
       setAnalysis(
-        `${sourceLabel || '자동 추정'} 적용: L ${getNum('L')} / D1 ${getNum('D1')} / D2 ${getNum('D2')} / D3 ${getNum('D3')} / DB ${getNum('DB')}`,
+        `${sourceLabel || '자동 추정'} 적용: L ${getNum('L')} / D1 ${getNum('D1')} / D2 ${getNum('D2')} / D3 ${getNum('D3')} / DB ${getNum('DB')}${descriptionSuffix}.${extraNote}`,
         'good'
       );
       setStatus('초안 치수 준비 완료', '프로파일이 다시 계산되었습니다. 필요하면 포인트를 직접 조정해 보세요.');
@@ -878,6 +943,7 @@
       const minDiameter = Math.min(getNum('D1'), getNum('D2'), getNum('D3'));
       const barbSpan = Math.max(0, getNum('barbCount') * getNum('barbPitch'));
       const estimatedInner = Math.max(0, minDiameter - getNum('T') * 2);
+      const descriptionText = partDescription.value.trim() || '없음';
 
       summaryList.innerHTML = `
         <div class="summaryItem">
@@ -895,6 +961,10 @@
         <div class="summaryItem">
           <strong>프로파일 포인트</strong>
           <span>현재 ${profile.length}개 포인트가 있고, 가장 가는 외경은 ${minDiameter.toFixed(1)}mm 입니다.</span>
+        </div>
+        <div class="summaryItem">
+          <strong>설명 메모</strong>
+          <span>${descriptionText}</span>
         </div>`;
     }
 
@@ -943,13 +1013,9 @@
       orbitTarget.copy(center);
       camera.near = Math.max(0.1, distance / 100);
       camera.far = Math.max(2000, distance * 10);
-      camera.position.set(
-        center.x + distance * 0.72,
-        center.y + distance * 0.42,
-        center.z + distance * 0.88
-      );
+      orbitRadius = distance;
       camera.updateProjectionMatrix();
-      camera.lookAt(orbitTarget);
+      updateCameraOrbit();
     }
 
     function renderPart() {
@@ -1040,6 +1106,10 @@
       applyDims(parseDimsFromText(document.getElementById('ocrText').value), '텍스트 추정');
     });
 
+    document.getElementById('descParseBtn').addEventListener('click', () => {
+      applyDims(parseDimsFromDescription(partDescription.value), '설명 추정');
+    });
+
     document.getElementById('presetBtn').addEventListener('click', () => {
       applyDims({ L: 53, D1: 25, D2: 16, D3: 12, DB: 15.5 }, '샘플 프리셋');
     });
@@ -1092,6 +1162,10 @@
         updateSummary();
         setStatus('입력값 변경 감지', '기본 프로파일로 다시 맞추려면 리셋 버튼을, 즉시 메쉬를 보려면 실행 버튼을 눌러 주세요.');
       });
+    });
+
+    partDescription.addEventListener('input', () => {
+      updateSummary();
     });
 
     rebuildProfileFromInputs();
