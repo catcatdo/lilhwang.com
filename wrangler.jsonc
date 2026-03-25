@@ -1,12 +1,32 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "lilhwang",
+  "main": "src/worker.js",
   "compatibility_date": "2025-09-27",
   "observability": {
     "enabled": true
   },
   "assets": {
-    "directory": "."
+    "directory": "public"
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "GAME_DB",
+        "class_name": "GameDatabase"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": [
+        "GameDatabase"
+      ]
+    }
+  ],
+  "vars": {
+    "SESSION_SECRET": "please-change-this-secret"
   },
   "compatibility_flags": [
     "nodejs_compat"

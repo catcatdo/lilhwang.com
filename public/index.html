@@ -1,0 +1,583 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>릴황의 밤샘 가게</title>
+  <meta name="description" content="로그인 후 진행 상황이 저장되는 작은 웹게임" />
+  <style>
+    :root {
+      --bg: #130f1c;
+      --panel: rgba(30, 24, 44, 0.88);
+      --panel-soft: rgba(46, 36, 66, 0.75);
+      --line: rgba(255, 255, 255, 0.1);
+      --text: #f8f1e8;
+      --muted: #bfb6cc;
+      --accent: #ff9d5c;
+      --accent-2: #ffcf68;
+      --good: #78e1b4;
+      --danger: #ff8e99;
+      --shadow: 0 30px 80px rgba(7, 5, 12, 0.42);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Helvetica Neue", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(255, 157, 92, 0.18), transparent 26%),
+        radial-gradient(circle at top right, rgba(120, 225, 180, 0.1), transparent 22%),
+        linear-gradient(180deg, #1a1325 0%, #0f0b16 100%);
+    }
+
+    button, input {
+      font: inherit;
+    }
+
+    .shell {
+      width: min(1160px, calc(100% - 24px));
+      margin: 0 auto;
+      padding: 20px 0 40px;
+    }
+
+    .hero,
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+      gap: 18px;
+      padding: 24px;
+      margin-bottom: 18px;
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--accent-2);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    h1, h2, h3, p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(2.5rem, 6vw, 4.7rem);
+      line-height: 0.94;
+      letter-spacing: -0.05em;
+    }
+
+    .lead {
+      margin-top: 16px;
+      color: var(--muted);
+      line-height: 1.8;
+      font-size: 1.02rem;
+      max-width: 640px;
+    }
+
+    .heroTips,
+    .stats,
+    .store,
+    .authTabs,
+    .actions {
+      display: grid;
+      gap: 12px;
+    }
+
+    .heroTips {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin-top: 22px;
+    }
+
+    .tip,
+    .stat,
+    .storeItem {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: var(--panel-soft);
+      padding: 16px;
+    }
+
+    .tip strong,
+    .stat strong,
+    .storeItem strong {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .tip span,
+    .stat span,
+    .storeItem span {
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 0.94rem;
+    }
+
+    .authCard {
+      display: grid;
+      gap: 14px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: rgba(18, 14, 27, 0.72);
+    }
+
+    .authTabs {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .tab,
+    .button,
+    .ghost {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px 14px;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text);
+      cursor: pointer;
+      transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+    }
+
+    .tab.active,
+    .button {
+      border-color: transparent;
+      background: linear-gradient(135deg, var(--accent) 0%, #ff7f5f 100%);
+      color: #2b130b;
+      font-weight: 800;
+    }
+
+    .tab:hover,
+    .button:hover,
+    .ghost:hover,
+    .playButton:hover {
+      transform: translateY(-1px);
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 0.93rem;
+    }
+
+    input {
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+    }
+
+    .status {
+      min-height: 24px;
+      color: var(--accent-2);
+      font-size: 0.93rem;
+    }
+
+    .status.error { color: var(--danger); }
+    .status.good { color: var(--good); }
+
+    .app {
+      display: none;
+      grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.85fr);
+      gap: 18px;
+    }
+
+    .panel {
+      padding: 22px;
+    }
+
+    .panelHead {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .stats {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin-bottom: 16px;
+    }
+
+    .playArea {
+      display: grid;
+      gap: 14px;
+      place-items: center;
+      min-height: 360px;
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: 26px;
+      background:
+        radial-gradient(circle at top, rgba(255, 207, 104, 0.16), transparent 28%),
+        linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+    }
+
+    .playButton {
+      width: min(260px, 68vw);
+      aspect-ratio: 1;
+      border: none;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 30% 30%, #fff0be, #ffbd60 42%, #d66e33 100%);
+      color: #38180b;
+      font-size: clamp(1.4rem, 3vw, 2rem);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      box-shadow:
+        inset 0 14px 30px rgba(255,255,255,0.22),
+        0 24px 50px rgba(0,0,0,0.28);
+      cursor: pointer;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 0.93rem;
+      line-height: 1.7;
+    }
+
+    .store {
+      margin-top: 14px;
+    }
+
+    .storeItem {
+      display: grid;
+      gap: 10px;
+    }
+
+    .storeMeta {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .actions {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin-top: 14px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 920px) {
+      .hero,
+      .app,
+      .heroTips,
+      .stats,
+      .actions {
+        grid-template-columns: 1fr;
+      }
+
+      .shell {
+        width: min(100% - 16px, 100%);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">Login + Save Game</p>
+        <h1>릴황의 밤샘 가게</h1>
+        <p class="lead">
+          작은 클릭 게임이지만 구조는 진지하게 잡았습니다. 회원가입 후 로그인하면
+          당신의 진행도는 서버에 저장되고, 다음에 다시 들어와도 이어서 플레이할 수 있습니다.
+        </p>
+        <div class="heroTips">
+          <div class="tip">
+            <strong>1. 회원가입</strong>
+            <span>아이디와 비밀번호로 계정을 만들고 세션을 시작합니다.</span>
+          </div>
+          <div class="tip">
+            <strong>2. 플레이</strong>
+            <span>버튼을 눌러 밤샘 포인트를 모으고 업그레이드를 구매합니다.</span>
+          </div>
+          <div class="tip">
+            <strong>3. 자동 저장</strong>
+            <span>게임 상태는 유저별로 저장되어 다음 로그인 때 그대로 불러옵니다.</span>
+          </div>
+        </div>
+      </div>
+
+      <aside class="authCard" id="authCard">
+        <div>
+          <h2>시작하기</h2>
+          <p class="small" style="margin-top:8px">최소 구조는 갖춘 상태라, 나중에 캐릭터, 아이템, 랭킹으로 확장하기 쉽습니다.</p>
+        </div>
+        <div class="authTabs">
+          <button class="tab active" id="loginTab">로그인</button>
+          <button class="tab" id="registerTab">회원가입</button>
+        </div>
+        <label>아이디
+          <input id="usernameInput" autocomplete="username" maxlength="24" placeholder="예: lilhwang" />
+        </label>
+        <label>비밀번호
+          <input id="passwordInput" type="password" autocomplete="current-password" maxlength="64" placeholder="8자 이상 권장" />
+        </label>
+        <div id="authStatus" class="status"></div>
+        <button class="button" id="authButton">로그인</button>
+      </aside>
+    </section>
+
+    <section class="app" id="app">
+      <div class="panel">
+        <div class="panelHead">
+          <div>
+            <h2 id="welcomeTitle">환영합니다</h2>
+            <p class="small">버튼을 눌러 밤샘 포인트를 모으고 가게를 키워보세요.</p>
+          </div>
+          <button class="ghost" id="logoutButton">로그아웃</button>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <strong>밤샘 포인트</strong>
+            <span id="coinsValue">0</span>
+          </div>
+          <div class="stat">
+            <strong>클릭 파워</strong>
+            <span id="powerValue">1</span>
+          </div>
+          <div class="stat">
+            <strong>총 클릭 수</strong>
+            <span id="clicksValue">0</span>
+          </div>
+          <div class="stat">
+            <strong>가게 레벨</strong>
+            <span id="levelValue">1</span>
+          </div>
+        </div>
+
+        <div class="playArea">
+          <button class="playButton" id="playButton">밤샘 굽기</button>
+          <p class="small">한 번 누를 때마다 포인트를 모읍니다. 업그레이드를 사면 클릭 효율이 커집니다.</p>
+          <div id="gameStatus" class="status"></div>
+        </div>
+      </div>
+
+      <aside class="panel">
+        <div class="panelHead">
+          <div>
+            <h2>업그레이드 가게</h2>
+            <p class="small">구매 내용도 함께 저장됩니다.</p>
+          </div>
+        </div>
+
+        <div class="store">
+          <div class="storeItem">
+            <div>
+              <strong>좋은 오븐</strong>
+              <span>클릭 파워를 1 올립니다.</span>
+            </div>
+            <div class="storeMeta">
+              <span>비용: <b id="upgradeCostValue">10</b></span>
+              <span>보유: <b id="upgradesValue">0</b></span>
+            </div>
+            <button class="button" id="upgradeButton">구매하기</button>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="ghost" id="refreshButton">저장 데이터 새로고침</button>
+          <button class="ghost" id="saveHintButton">구조 설명 보기</button>
+        </div>
+        <div id="saveHint" class="small hidden" style="margin-top:14px">
+          로그인 세션은 쿠키로 유지되고, 유저 정보와 게임 진행도는 서버 쪽 Durable Object 저장소에 보관됩니다.
+        </div>
+      </aside>
+    </section>
+  </div>
+
+  <script>
+    const authCard = document.getElementById('authCard');
+    const app = document.getElementById('app');
+    const loginTab = document.getElementById('loginTab');
+    const registerTab = document.getElementById('registerTab');
+    const usernameInput = document.getElementById('usernameInput');
+    const passwordInput = document.getElementById('passwordInput');
+    const authButton = document.getElementById('authButton');
+    const authStatus = document.getElementById('authStatus');
+    const gameStatus = document.getElementById('gameStatus');
+    const welcomeTitle = document.getElementById('welcomeTitle');
+    const playButton = document.getElementById('playButton');
+    const upgradeButton = document.getElementById('upgradeButton');
+    const refreshButton = document.getElementById('refreshButton');
+    const logoutButton = document.getElementById('logoutButton');
+    const saveHintButton = document.getElementById('saveHintButton');
+    const saveHint = document.getElementById('saveHint');
+
+    const coinsValue = document.getElementById('coinsValue');
+    const powerValue = document.getElementById('powerValue');
+    const clicksValue = document.getElementById('clicksValue');
+    const levelValue = document.getElementById('levelValue');
+    const upgradesValue = document.getElementById('upgradesValue');
+    const upgradeCostValue = document.getElementById('upgradeCostValue');
+
+    let mode = 'login';
+    let me = null;
+    let state = null;
+
+    function setMode(nextMode) {
+      mode = nextMode;
+      loginTab.classList.toggle('active', nextMode === 'login');
+      registerTab.classList.toggle('active', nextMode === 'register');
+      authButton.textContent = nextMode === 'login' ? '로그인' : '회원가입';
+      authStatus.textContent = '';
+      authStatus.className = 'status';
+    }
+
+    function setStatus(target, message, type) {
+      target.textContent = message || '';
+      target.className = 'status' + (type ? ' ' + type : '');
+    }
+
+    function renderState() {
+      if (!me || !state) return;
+      welcomeTitle.textContent = `${me.username}님의 밤샘 가게`;
+      coinsValue.textContent = state.coins;
+      powerValue.textContent = state.clickPower;
+      clicksValue.textContent = state.totalClicks;
+      levelValue.textContent = state.level;
+      upgradesValue.textContent = state.upgrades;
+      upgradeCostValue.textContent = state.upgradeCost;
+    }
+
+    async function api(path, options = {}) {
+      const response = await fetch(path, {
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+        ...options
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error || '요청 처리 중 문제가 발생했습니다.');
+      }
+      return data;
+    }
+
+    async function loadSession() {
+      try {
+        const data = await api('/api/me', { method: 'GET' });
+        me = data.user;
+        state = data.state;
+        authCard.style.display = 'none';
+        app.style.display = 'grid';
+        renderState();
+        setStatus(gameStatus, '저장된 데이터를 불러왔습니다.', 'good');
+      } catch (_error) {
+        me = null;
+        state = null;
+        authCard.style.display = 'grid';
+        app.style.display = 'none';
+      }
+    }
+
+    async function handleAuth() {
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value.trim();
+
+      if (username.length < 3) {
+        setStatus(authStatus, '아이디는 3자 이상으로 입력해 주세요.', 'error');
+        return;
+      }
+
+      if (password.length < 6) {
+        setStatus(authStatus, '비밀번호는 6자 이상으로 입력해 주세요.', 'error');
+        return;
+      }
+
+      authButton.disabled = true;
+      setStatus(authStatus, mode === 'login' ? '로그인 중...' : '계정 생성 중...');
+
+      try {
+        const data = await api(`/api/${mode}`, {
+          method: 'POST',
+          body: JSON.stringify({ username, password })
+        });
+        me = data.user;
+        state = data.state;
+        renderState();
+        authCard.style.display = 'none';
+        app.style.display = 'grid';
+        setStatus(gameStatus, mode === 'login' ? '로그인되었습니다.' : '가입과 동시에 로그인되었습니다.', 'good');
+      } catch (error) {
+        setStatus(authStatus, error.message, 'error');
+      } finally {
+        authButton.disabled = false;
+      }
+    }
+
+    async function play() {
+      try {
+        const data = await api('/api/game/click', { method: 'POST' });
+        state = data.state;
+        renderState();
+        setStatus(gameStatus, `포인트 +${data.gained}`, 'good');
+      } catch (error) {
+        setStatus(gameStatus, error.message, 'error');
+      }
+    }
+
+    async function buyUpgrade() {
+      try {
+        const data = await api('/api/game/upgrade', { method: 'POST' });
+        state = data.state;
+        renderState();
+        setStatus(gameStatus, '업그레이드를 구매했습니다.', 'good');
+      } catch (error) {
+        setStatus(gameStatus, error.message, 'error');
+      }
+    }
+
+    async function refreshState() {
+      try {
+        const data = await api('/api/me', { method: 'GET' });
+        me = data.user;
+        state = data.state;
+        renderState();
+        setStatus(gameStatus, '최신 저장 데이터를 불러왔습니다.', 'good');
+      } catch (error) {
+        setStatus(gameStatus, error.message, 'error');
+      }
+    }
+
+    async function logout() {
+      await api('/api/logout', { method: 'POST' });
+      me = null;
+      state = null;
+      authCard.style.display = 'grid';
+      app.style.display = 'none';
+      usernameInput.value = '';
+      passwordInput.value = '';
+      setStatus(authStatus, '로그아웃되었습니다.', 'good');
+    }
+
+    loginTab.addEventListener('click', () => setMode('login'));
+    registerTab.addEventListener('click', () => setMode('register'));
+    authButton.addEventListener('click', handleAuth);
+    playButton.addEventListener('click', play);
+    upgradeButton.addEventListener('click', buyUpgrade);
+    refreshButton.addEventListener('click', refreshState);
+    logoutButton.addEventListener('click', logout);
+    saveHintButton.addEventListener('click', () => saveHint.classList.toggle('hidden'));
+
+    loadSession();
+  </script>
+</body>
+</html>
