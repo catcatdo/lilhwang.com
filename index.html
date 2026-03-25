@@ -3,179 +3,434 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>lilhwang.com | 3D Print Tools</title>
+  <title>Lilhwang</title>
+  <meta
+    name="description"
+    content="Lilhwang의 개인 홈페이지. 작업, 기록, 관심사를 한 페이지에 담았습니다."
+  />
   <style>
     :root {
-      --bg: #f4efe6;
+      --bg: #f5efe5;
       --paper: rgba(255, 251, 245, 0.82);
-      --ink: #1d1a17;
-      --muted: #645d57;
-      --line: rgba(29, 26, 23, 0.12);
-      --accent: #d85d31;
-      --accent-dark: #9f3917;
-      --shadow: 0 24px 80px rgba(68, 43, 21, 0.15);
+      --paper-strong: rgba(255, 251, 245, 0.94);
+      --ink: #181512;
+      --muted: #6f665d;
+      --line: rgba(24, 21, 18, 0.1);
+      --accent: #b34b2f;
+      --accent-dark: #7f2c17;
+      --shadow: 0 30px 80px rgba(77, 50, 30, 0.14);
+      --radius-xl: 32px;
+      --radius-lg: 24px;
+      --radius-md: 18px;
+      --content: min(1120px, calc(100% - 28px));
     }
 
     * { box-sizing: border-box; }
 
+    html { scroll-behavior: smooth; }
+
     body {
       margin: 0;
-      min-height: 100vh;
       color: var(--ink);
-      font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+      font-family: "Avenir Next", "Helvetica Neue", sans-serif;
       background:
-        radial-gradient(circle at top left, rgba(216, 93, 49, 0.16), transparent 28%),
-        radial-gradient(circle at bottom right, rgba(70, 110, 89, 0.18), transparent 24%),
-        linear-gradient(180deg, #f8f1e7 0%, #eee4d5 100%);
+        radial-gradient(circle at top left, rgba(179, 75, 47, 0.18), transparent 28%),
+        radial-gradient(circle at 85% 15%, rgba(54, 98, 86, 0.14), transparent 22%),
+        linear-gradient(180deg, #f8f2e7 0%, #eee4d4 100%);
     }
 
-    .frame {
-      width: min(1040px, calc(100% - 32px));
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .page {
+      width: var(--content);
       margin: 0 auto;
-      padding: 32px 0 56px;
+      padding: 18px 0 48px;
+    }
+
+    .nav {
+      position: sticky;
+      top: 14px;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 18px;
+      margin-bottom: 18px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 249, 241, 0.7);
+      backdrop-filter: blur(20px);
+      box-shadow: 0 14px 40px rgba(70, 45, 22, 0.08);
+    }
+
+    .brand {
+      font-family: Georgia, "Iowan Old Style", serif;
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    .navLinks {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .hero,
+    .section,
+    .footerBox {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-xl);
+      background: var(--paper);
+      backdrop-filter: blur(18px);
+      box-shadow: var(--shadow);
     }
 
     .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+      gap: 20px;
       padding: 28px;
-      border: 1px solid var(--line);
-      border-radius: 32px;
-      background: var(--paper);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(18px);
     }
 
     .eyebrow {
       margin: 0 0 12px;
-      color: var(--accent-dark);
-      font-size: 13px;
-      font-weight: 700;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 800;
       letter-spacing: 0.16em;
       text-transform: uppercase;
     }
 
-    h1 {
+    h1,
+    h2,
+    h3,
+    p {
       margin: 0;
-      font-size: clamp(2.5rem, 8vw, 5.2rem);
-      line-height: 0.94;
-      letter-spacing: -0.04em;
     }
 
-    .lead {
-      max-width: 700px;
-      margin: 18px 0 0;
-      font-size: clamp(1rem, 2.2vw, 1.2rem);
-      line-height: 1.7;
+    h1 {
+      font-family: Georgia, "Iowan Old Style", serif;
+      font-size: clamp(3rem, 8vw, 5.6rem);
+      line-height: 0.92;
+      letter-spacing: -0.05em;
+    }
+
+    .heroLead {
+      max-width: 680px;
+      margin-top: 18px;
       color: var(--muted);
+      font-size: clamp(1rem, 2.3vw, 1.18rem);
+      line-height: 1.8;
     }
 
-    .actions,
-    .cards {
+    .heroActions,
+    .pillRow,
+    .projectGrid,
+    .infoGrid {
       display: grid;
-      gap: 16px;
+      gap: 14px;
     }
 
-    .actions {
-      grid-template-columns: minmax(0, 1fr);
-      margin-top: 26px;
-      max-width: 640px;
+    .heroActions {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin-top: 24px;
+      max-width: 560px;
     }
 
     .button,
-    .card {
-      border-radius: 24px;
-      text-decoration: none;
+    .miniCard,
+    .projectCard,
+    .infoCard {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      background: rgba(255, 255, 255, 0.56);
     }
 
     .button {
-      padding: 18px 20px;
-      border: 1px solid var(--line);
-      color: inherit;
-      background: rgba(255, 255, 255, 0.6);
+      padding: 16px 18px;
       transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
     }
 
-    .button:hover {
+    .button:hover,
+    .projectCard:hover {
       transform: translateY(-2px);
-      border-color: rgba(216, 93, 49, 0.35);
-      background: rgba(255, 255, 255, 0.9);
+      border-color: rgba(179, 75, 47, 0.34);
+      background: rgba(255, 255, 255, 0.84);
     }
 
     .button.primary {
       color: #fff8f1;
       border-color: transparent;
-      background: linear-gradient(135deg, var(--accent) 0%, #b23e19 100%);
+      background: linear-gradient(135deg, var(--accent) 0%, #8b331d 100%);
     }
 
     .button strong,
-    .card strong {
+    .projectCard strong,
+    .miniCard strong,
+    .infoCard strong {
       display: block;
       margin-bottom: 6px;
-      font-size: 1.08rem;
+      font-size: 1rem;
     }
 
     .button span,
-    .card span {
-      color: inherit;
-      opacity: 0.8;
-      line-height: 1.5;
+    .miniCard span,
+    .projectCard span,
+    .infoCard span,
+    .section p {
+      color: var(--muted);
+      line-height: 1.65;
     }
 
-    .cards {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+    .heroSide {
+      display: grid;
+      gap: 14px;
+    }
+
+    .miniCard {
+      padding: 18px;
+      background: var(--paper-strong);
+    }
+
+    .section {
+      padding: 24px;
       margin-top: 18px;
     }
 
-    .card {
-      padding: 18px 20px;
-      border: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.58);
+    .sectionHead {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
     }
 
-    @media (max-width: 820px) {
-      .actions,
-      .cards {
+    .sectionTitle {
+      font-family: Georgia, "Iowan Old Style", serif;
+      font-size: 2rem;
+      letter-spacing: -0.04em;
+    }
+
+    .sectionKicker {
+      color: var(--accent-dark);
+      font-size: 0.9rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .pillRow {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .pill {
+      padding: 16px 18px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.5);
+      text-align: center;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .projectGrid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .projectCard,
+    .infoCard {
+      padding: 18px;
+    }
+
+    .projectMeta {
+      margin-bottom: 10px;
+      color: var(--accent-dark);
+      font-size: 0.84rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .infoGrid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .footerBox {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 20px 24px;
+      margin-top: 18px;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 920px) {
+      .hero,
+      .projectGrid,
+      .pillRow,
+      .infoGrid,
+      .heroActions {
         grid-template-columns: 1fr;
       }
 
-      .hero {
-        padding: 22px;
+      .footerBox,
+      .sectionHead,
+      .nav {
         border-radius: 24px;
+      }
+
+      .footerBox,
+      .sectionHead,
+      .nav,
+      .hero {
+        align-items: start;
+        flex-direction: column;
       }
     }
   </style>
 </head>
 <body>
-  <main class="frame">
-    <section class="hero">
-      <p class="eyebrow">Lilhwang.com Prototype</p>
-      <h1>사진에서 시작하는 3D 프린트 실험실</h1>
-      <p class="lead">
-        업로드한 참고 사진을 바탕으로 치수를 추정하고, 회전체 프로파일을 바로 만지면서
-        피팅이나 어댑터 형태를 빠르게 잡아볼 수 있는 초안 도구입니다.
-      </p>
+  <div class="page">
+    <header class="nav">
+      <a class="brand" href="#top">Lilhwang</a>
+      <nav class="navLinks">
+        <a href="#about">About</a>
+        <a href="#projects">Projects</a>
+        <a href="#notes">Notes</a>
+        <a href="#contact">Contact</a>
+      </nav>
+    </header>
 
-      <div class="actions">
-        <a class="button primary" href="./photo-3d-draft/index.html">
-          <strong>3D 피팅 제너레이터 열기</strong>
-          <span>사진 업로드, 자동 치수 추정, 프로파일 편집, 3D 프리뷰까지 한 번에 들어갑니다.</span>
-        </a>
-      </div>
+    <main id="top">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Personal Homepage</p>
+          <h1>조용히 오래 남는 작업을 합니다.</h1>
+          <p class="heroLead">
+            안녕하세요, Lilhwang입니다. 아이디어를 화면 위에 정리하고,
+            작지만 단단한 결과물로 바꾸는 일을 좋아합니다. 이 홈페이지에는
+            제가 만들고 있는 것들, 생각하고 있는 것들, 그리고 앞으로 해보고 싶은 일을 담아둘 예정입니다.
+          </p>
+          <div class="heroActions">
+            <a class="button primary" href="#projects">
+              <strong>최근 작업 보기</strong>
+              <span>지금까지의 작업과 앞으로 공개할 프로젝트를 정리합니다.</span>
+            </a>
+            <a class="button" href="#contact">
+              <strong>연락하기</strong>
+              <span>협업 제안, 가벼운 인사, 흥미로운 이야기 모두 환영합니다.</span>
+            </a>
+          </div>
+        </div>
 
-      <div class="cards">
-        <article class="card">
-          <strong>빠른 검증</strong>
-          <span>복잡한 CAD에 들어가기 전에 길이와 지름 감을 잡는 데 초점을 맞췄습니다.</span>
-        </article>
-        <article class="card">
-          <strong>가벼운 워크플로우</strong>
-          <span>정적 HTML 기반이라 로컬에서 바로 열거나 간단한 서버만 띄워도 사용할 수 있습니다.</span>
-        </article>
-        <article class="card">
-          <strong>수정 가능한 초안</strong>
-          <span>숫자 입력과 포인트 편집이 모두 열려 있어서 형상 변형 실험에 유리합니다.</span>
-        </article>
+        <aside class="heroSide">
+          <div class="miniCard">
+            <strong>지금 하고 있는 일</strong>
+            <span>개인 웹사이트를 다듬고, 스스로 오래 쓸 수 있는 디지털 공간을 만드는 중입니다.</span>
+          </div>
+          <div class="miniCard">
+            <strong>관심 분야</strong>
+            <span>웹, 디자인, 기록, 창작 도구, 그리고 느리지만 깊게 쌓이는 개인 프로젝트.</span>
+          </div>
+          <div class="miniCard">
+            <strong>이 페이지의 역할</strong>
+            <span>포트폴리오이자 메모장, 그리고 앞으로 공개할 작은 결과물들의 홈베이스.</span>
+          </div>
+        </aside>
+      </section>
+
+      <section class="section" id="about">
+        <div class="sectionHead">
+          <div>
+            <div class="sectionKicker">About</div>
+            <h2 class="sectionTitle">한 사람의 속도로 만드는 웹</h2>
+          </div>
+          <p class="small">빠른 화제보다 오래 남는 감각을 더 좋아합니다.</p>
+        </div>
+        <p>
+          저는 기술과 취향이 자연스럽게 만나는 지점을 좋아합니다. 보기 좋은 화면을 만드는 일도,
+          누군가에게 실제로 도움이 되는 흐름을 정리하는 일도 모두 흥미롭습니다.
+          그래서 이 공간은 단순한 소개 페이지라기보다, 제가 어떤 방향으로 움직이고 있는지 보여주는 기록장이 될 예정입니다.
+        </p>
+        <div class="pillRow" style="margin-top:18px">
+          <div class="pill">Thoughtful UI</div>
+          <div class="pill">Personal Tools</div>
+          <div class="pill">Writing & Notes</div>
+          <div class="pill">Slow Projects</div>
+        </div>
+      </section>
+
+      <section class="section" id="projects">
+        <div class="sectionHead">
+          <div>
+            <div class="sectionKicker">Projects</div>
+            <h2 class="sectionTitle">작업하고 있는 것들</h2>
+          </div>
+          <p class="small">아래 내용은 지금 시점의 스냅샷이며 언제든 더 채워질 수 있습니다.</p>
+        </div>
+        <div class="projectGrid">
+          <article class="projectCard">
+            <div class="projectMeta">Current</div>
+            <strong>개인 홈페이지 리뉴얼</strong>
+            <span>이 사이트 자체를 꾸준히 손보면서, 소개와 기록과 작업물을 한곳에 모으는 구조를 만들고 있습니다.</span>
+          </article>
+          <article class="projectCard">
+            <div class="projectMeta">In Progress</div>
+            <strong>작은 도구 실험</strong>
+            <span>복잡한 문제를 가볍게 정리해 주는 미니 툴, 개인 워크플로우를 보조하는 화면을 천천히 시도하고 있습니다.</span>
+          </article>
+          <article class="projectCard">
+            <div class="projectMeta">Soon</div>
+            <strong>기록 아카이브</strong>
+            <span>짧은 노트, 링크, 작업 중 메모를 쌓아두는 섹션을 추가할 생각입니다.</span>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="notes">
+        <div class="sectionHead">
+          <div>
+            <div class="sectionKicker">Notes</div>
+            <h2 class="sectionTitle">요즘 자주 생각하는 것</h2>
+          </div>
+          <p class="small">개인 사이트는 결국 한 사람의 태도를 보여주는 공간이라고 생각합니다.</p>
+        </div>
+        <div class="infoGrid">
+          <article class="infoCard">
+            <strong>과하게 복잡하지 않은 화면</strong>
+            <span>보는 사람을 지치게 하지 않으면서도, 만든 사람의 결이 드러나는 인터페이스를 좋아합니다.</span>
+          </article>
+          <article class="infoCard">
+            <strong>계속 수정 가능한 구조</strong>
+            <span>완벽하게 시작하기보다, 시간이 지나며 자연스럽게 덧붙일 수 있는 형태를 선호합니다.</span>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footerBox" id="contact">
+      <div>
+        <strong>Contact</strong>
+        <p class="small">이메일, 소셜 링크, 깃허브 주소는 원하는 방식으로 바로 바꿔 넣을 수 있습니다.</p>
       </div>
-    </section>
-  </main>
+      <div class="small">
+        <div>Email: hello@lilhwang.com</div>
+        <div>Instagram: @lilhwang</div>
+      </div>
+    </footer>
+  </div>
 </body>
 </html>
