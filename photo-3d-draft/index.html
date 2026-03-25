@@ -622,6 +622,7 @@
 
     let wire = false;
     let renderer, scene, camera, mesh, pivot;
+    let orbitTarget;
     let profile = [];
     let isDragging = false;
     let dragStartX = 0;
@@ -667,6 +668,7 @@
       pivot.rotation.x = baseRotX;
       pivot.rotation.y = baseRotY;
       scene.add(pivot);
+      orbitTarget = new THREE.Vector3(0, 0, 0);
 
       scene.add(new THREE.AmbientLight(0xffffff, 1.15));
       const sun = new THREE.DirectionalLight(0xffffff, 1.1);
@@ -703,6 +705,7 @@
       baseRotX = Math.max(-1.35, Math.min(1.35, baseRotX + dy * 0.01));
       pivot.rotation.x = baseRotX;
       pivot.rotation.y = baseRotY;
+      camera.lookAt(orbitTarget);
       renderer.render(scene, camera);
     }
 
@@ -714,6 +717,7 @@
       event.preventDefault();
       const nextZ = camera.position.z + event.deltaY * 0.12;
       camera.position.z = Math.max(70, Math.min(360, nextZ));
+      camera.lookAt(orbitTarget);
       renderer.render(scene, camera);
     }
 
@@ -723,6 +727,7 @@
       renderer.setSize(el.clientWidth, el.clientHeight);
       camera.aspect = el.clientWidth / el.clientHeight;
       camera.updateProjectionMatrix();
+      camera.lookAt(orbitTarget);
       renderer.render(scene, camera);
     }
 
@@ -854,7 +859,15 @@
           z: Number(Math.max(0, point.z || 0).toFixed(2)),
           d: Number(Math.max(0.1, point.d || 0.1).toFixed(2))
         }))
-        .sort((a, b) => a.z - b.z);
+        .sort((a, b) => a.z - b.z)
+        .map((point, index, list) => {
+          if (index === 0) return point;
+          const prev = list[index - 1];
+          if (point.z <= prev.z) {
+            return { ...point, z: Number((prev.z + 0.1).toFixed(2)) };
+          }
+          return point;
+        });
 
       return profile.length >= 2;
     }
@@ -919,6 +932,26 @@
       return geometry;
     }
 
+    function frameMesh(nextMesh) {
+      const bounds = new THREE.Box3().setFromObject(nextMesh);
+      const size = bounds.getSize(new THREE.Vector3());
+      const center = bounds.getCenter(new THREE.Vector3());
+      const maxSize = Math.max(size.x, size.y, size.z, 1);
+      const fitHeightDistance = maxSize / (2 * Math.tan((camera.fov * Math.PI) / 360));
+      const distance = fitHeightDistance * 1.55;
+
+      orbitTarget.copy(center);
+      camera.near = Math.max(0.1, distance / 100);
+      camera.far = Math.max(2000, distance * 10);
+      camera.position.set(
+        center.x + distance * 0.72,
+        center.y + distance * 0.42,
+        center.z + distance * 0.88
+      );
+      camera.updateProjectionMatrix();
+      camera.lookAt(orbitTarget);
+    }
+
     function renderPart() {
       init3D();
 
@@ -939,12 +972,11 @@
       mesh = new THREE.Mesh(geometry, material);
       pivot.add(mesh);
 
-      const L = getNum('L');
-      const D = Math.max(getNum('D1'), getNum('D2'), getNum('D3'), getNum('DB'));
-      camera.position.set(D * 2.25, Math.max(60, L * 1.15), D * 2.65);
-      camera.lookAt(0, 0, 0);
+      frameMesh(mesh);
       renderer.render(scene, camera);
 
+      const L = getNum('L');
+      const D = Math.max(getNum('D1'), getNum('D2'), getNum('D3'), getNum('DB'));
       document.getElementById('resultText').textContent =
         `생성 완료: 길이 ${L}mm / 최대 외경 ${D}mm / 프로파일 포인트 ${profile.length}개`;
       setStatus('3D 프리뷰 갱신 완료', '드래그로 각도를 바꾸고, 휠로 확대하거나 축소할 수 있습니다.');
