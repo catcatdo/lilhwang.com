@@ -3,214 +3,128 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>릴황의 밤샘 가게</title>
-  <meta name="description" content="로그인 후 진행 상황이 저장되는 작은 웹게임" />
+  <title>릴황 온라인</title>
+  <meta name="description" content="고전 온라인 RPG 감성의 로그인 기반 웹게임" />
   <style>
     :root {
-      --bg: #130f1c;
-      --panel: rgba(30, 24, 44, 0.88);
-      --panel-soft: rgba(46, 36, 66, 0.75);
-      --line: rgba(255, 255, 255, 0.1);
-      --text: #f8f1e8;
-      --muted: #bfb6cc;
-      --accent: #ff9d5c;
-      --accent-2: #ffcf68;
-      --good: #78e1b4;
-      --danger: #ff8e99;
-      --shadow: 0 30px 80px rgba(7, 5, 12, 0.42);
+      --bg: #120e17;
+      --panel: rgba(31, 24, 40, 0.9);
+      --panel-soft: rgba(51, 41, 65, 0.7);
+      --line: rgba(255,255,255,0.1);
+      --text: #f7eedf;
+      --muted: #c3b8cc;
+      --accent: #f1a85f;
+      --gold: #ffd27a;
+      --good: #83e0b5;
+      --bad: #ff959a;
+      --shadow: 0 30px 80px rgba(0,0,0,0.35);
     }
-
     * { box-sizing: border-box; }
     body {
       margin: 0;
       min-height: 100vh;
-      font-family: "Avenir Next", "Helvetica Neue", sans-serif;
       color: var(--text);
+      font-family: "Avenir Next", "Helvetica Neue", sans-serif;
       background:
-        radial-gradient(circle at top left, rgba(255, 157, 92, 0.18), transparent 26%),
-        radial-gradient(circle at top right, rgba(120, 225, 180, 0.1), transparent 22%),
-        linear-gradient(180deg, #1a1325 0%, #0f0b16 100%);
+        radial-gradient(circle at top left, rgba(241,168,95,0.16), transparent 28%),
+        radial-gradient(circle at top right, rgba(131,224,181,0.08), transparent 20%),
+        linear-gradient(180deg, #1a1320 0%, #0d0a11 100%);
     }
-
-    button, input {
-      font: inherit;
-    }
-
-    .shell {
-      width: min(1160px, calc(100% - 24px));
-      margin: 0 auto;
-      padding: 20px 0 40px;
-    }
-
-    .hero,
-    .panel {
+    button, input { font: inherit; }
+    .shell { width: min(1180px, calc(100% - 24px)); margin: 0 auto; padding: 20px 0 42px; }
+    .hero, .panel {
       border: 1px solid var(--line);
-      border-radius: 28px;
+      border-radius: 30px;
       background: var(--panel);
-      box-shadow: var(--shadow);
       backdrop-filter: blur(16px);
+      box-shadow: var(--shadow);
     }
-
     .hero {
       display: grid;
-      grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+      grid-template-columns: minmax(0,1.15fr) minmax(330px,0.85fr);
       gap: 18px;
       padding: 24px;
       margin-bottom: 18px;
     }
-
     .eyebrow {
       margin: 0 0 10px;
-      color: var(--accent-2);
+      color: var(--gold);
       font-size: 12px;
       font-weight: 800;
       letter-spacing: 0.18em;
       text-transform: uppercase;
     }
-
-    h1, h2, h3, p {
-      margin: 0;
-    }
-
-    h1 {
-      font-size: clamp(2.5rem, 6vw, 4.7rem);
-      line-height: 0.94;
-      letter-spacing: -0.05em;
-    }
-
-    .lead {
-      margin-top: 16px;
-      color: var(--muted);
-      line-height: 1.8;
-      font-size: 1.02rem;
-      max-width: 640px;
-    }
-
-    .heroTips,
-    .stats,
-    .store,
-    .authTabs,
-    .actions {
-      display: grid;
-      gap: 12px;
-    }
-
-    .heroTips {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      margin-top: 22px;
-    }
-
-    .tip,
-    .stat,
-    .storeItem {
+    h1,h2,h3,p { margin: 0; }
+    h1 { font-size: clamp(2.7rem, 6vw, 5rem); line-height: 0.94; letter-spacing: -0.05em; }
+    .lead { margin-top: 16px; max-width: 680px; color: var(--muted); line-height: 1.8; }
+    .tips, .authTabs, .jobGrid, .stats, .actions, .store { display: grid; gap: 12px; }
+    .tips { grid-template-columns: repeat(3, minmax(0,1fr)); margin-top: 22px; }
+    .tip, .stat, .storeItem, .jobCard {
+      padding: 16px;
       border: 1px solid var(--line);
       border-radius: 20px;
       background: var(--panel-soft);
-      padding: 16px;
     }
-
-    .tip strong,
-    .stat strong,
-    .storeItem strong {
-      display: block;
-      margin-bottom: 6px;
-    }
-
-    .tip span,
-    .stat span,
-    .storeItem span {
-      color: var(--muted);
-      line-height: 1.6;
-      font-size: 0.94rem;
-    }
-
+    .tip strong, .stat strong, .storeItem strong, .jobCard strong { display: block; margin-bottom: 6px; }
+    .tip span, .stat span, .storeItem span, .jobCard span, .small { color: var(--muted); line-height: 1.65; font-size: 0.94rem; }
     .authCard {
       display: grid;
       gap: 14px;
       padding: 18px;
       border: 1px solid var(--line);
       border-radius: 24px;
-      background: rgba(18, 14, 27, 0.72);
+      background: rgba(17, 13, 23, 0.76);
     }
-
-    .authTabs {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .tab,
-    .button,
-    .ghost {
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 12px 14px;
-      background: rgba(255, 255, 255, 0.04);
-      color: var(--text);
-      cursor: pointer;
+    .authTabs, .actions { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .jobGrid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .tab, .button, .ghost, .jobCard, .playButton {
       transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
     }
-
-    .tab.active,
-    .button {
+    .tab, .button, .ghost {
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      cursor: pointer;
+    }
+    .tab.active, .button {
       border-color: transparent;
-      background: linear-gradient(135deg, var(--accent) 0%, #ff7f5f 100%);
-      color: #2b130b;
+      background: linear-gradient(135deg, var(--accent) 0%, #ff845d 100%);
+      color: #30170d;
       font-weight: 800;
     }
-
-    .tab:hover,
-    .button:hover,
-    .ghost:hover,
-    .playButton:hover {
-      transform: translateY(-1px);
+    .jobCard {
+      text-align: left;
+      cursor: pointer;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.03);
     }
-
-    label {
-      display: grid;
-      gap: 6px;
-      color: var(--muted);
-      font-size: 0.93rem;
+    .jobCard.active {
+      border-color: rgba(255, 210, 122, 0.6);
+      background: linear-gradient(180deg, rgba(255,210,122,0.16), rgba(255,255,255,0.04));
     }
-
+    .tab:hover, .button:hover, .ghost:hover, .jobCard:hover, .playButton:hover { transform: translateY(-1px); }
+    label { display: grid; gap: 6px; font-size: 0.93rem; color: var(--muted); }
     input {
       padding: 12px 14px;
       border-radius: 14px;
       border: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.06);
+      background: rgba(255,255,255,0.05);
       color: var(--text);
     }
-
-    .status {
-      min-height: 24px;
-      color: var(--accent-2);
-      font-size: 0.93rem;
-    }
-
-    .status.error { color: var(--danger); }
+    .status { min-height: 24px; font-size: 0.93rem; color: var(--gold); }
+    .status.error { color: var(--bad); }
     .status.good { color: var(--good); }
-
     .app {
       display: none;
-      grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.85fr);
+      grid-template-columns: minmax(0,1.2fr) minmax(300px,0.8fr);
       gap: 18px;
     }
-
-    .panel {
-      padding: 22px;
-    }
-
-    .panelHead {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 14px;
-    }
-
-    .stats {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      margin-bottom: 16px;
-    }
-
+    .panel { padding: 22px; }
+    .panelHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+    .stats { grid-template-columns: repeat(2, minmax(0,1fr)); margin-bottom: 16px; }
     .playArea {
       display: grid;
       gap: 14px;
@@ -220,71 +134,26 @@
       border: 1px solid var(--line);
       border-radius: 26px;
       background:
-        radial-gradient(circle at top, rgba(255, 207, 104, 0.16), transparent 28%),
+        radial-gradient(circle at top, rgba(255,210,122,0.16), transparent 26%),
         linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
     }
-
     .playButton {
-      width: min(260px, 68vw);
+      width: min(270px, 70vw);
       aspect-ratio: 1;
       border: none;
       border-radius: 50%;
-      background:
-        radial-gradient(circle at 30% 30%, #fff0be, #ffbd60 42%, #d66e33 100%);
-      color: #38180b;
+      cursor: pointer;
+      color: #30170d;
       font-size: clamp(1.4rem, 3vw, 2rem);
       font-weight: 900;
       letter-spacing: -0.03em;
-      box-shadow:
-        inset 0 14px 30px rgba(255,255,255,0.22),
-        0 24px 50px rgba(0,0,0,0.28);
-      cursor: pointer;
+      background: radial-gradient(circle at 30% 30%, #fff2c9, #ffc66d 42%, #c46330 100%);
+      box-shadow: inset 0 14px 30px rgba(255,255,255,0.24), 0 24px 50px rgba(0,0,0,0.28);
     }
-
-    .small {
-      color: var(--muted);
-      font-size: 0.93rem;
-      line-height: 1.7;
-    }
-
-    .store {
-      margin-top: 14px;
-    }
-
-    .storeItem {
-      display: grid;
-      gap: 10px;
-    }
-
-    .storeMeta {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      color: var(--muted);
-      font-size: 0.9rem;
-    }
-
-    .actions {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      margin-top: 14px;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
+    .hidden { display: none !important; }
     @media (max-width: 920px) {
-      .hero,
-      .app,
-      .heroTips,
-      .stats,
-      .actions {
-        grid-template-columns: 1fr;
-      }
-
-      .shell {
-        width: min(100% - 16px, 100%);
-      }
+      .hero, .app, .tips, .authTabs, .jobGrid, .stats, .actions { grid-template-columns: 1fr; }
+      .shell { width: min(100% - 16px, 100%); }
     }
   </style>
 </head>
@@ -292,32 +161,32 @@
   <div class="shell">
     <section class="hero">
       <div>
-        <p class="eyebrow">Login + Save Game</p>
-        <h1>릴황의 밤샘 가게</h1>
+        <p class="eyebrow">Classic Fantasy Web RPG</p>
+        <h1>릴황 온라인</h1>
         <p class="lead">
-          작은 클릭 게임이지만 구조는 진지하게 잡았습니다. 회원가입 후 로그인하면
-          당신의 진행도는 서버에 저장되고, 다음에 다시 들어와도 이어서 플레이할 수 있습니다.
+          라그나로크 온라인 같은 초창기 온라인 RPG 감성을 가볍게 가져온 웹게임입니다.
+          계정을 만들고 직업을 고른 뒤, 슬라임과 포링을 잡으며 성장한 데이터가 유저별로 저장됩니다.
         </p>
-        <div class="heroTips">
+        <div class="tips">
           <div class="tip">
-            <strong>1. 회원가입</strong>
-            <span>아이디와 비밀번호로 계정을 만들고 세션을 시작합니다.</span>
+            <strong>직업 선택</strong>
+            <span>전사, 마법사, 프리스트, 도적 중 하나로 시작합니다.</span>
           </div>
           <div class="tip">
-            <strong>2. 플레이</strong>
-            <span>버튼을 눌러 밤샘 포인트를 모으고 업그레이드를 구매합니다.</span>
+            <strong>로그인 저장</strong>
+            <span>로그인 후 진행도와 직업 정보가 서버에 유지됩니다.</span>
           </div>
           <div class="tip">
-            <strong>3. 자동 저장</strong>
-            <span>게임 상태는 유저별로 저장되어 다음 로그인 때 그대로 불러옵니다.</span>
+            <strong>초반 사냥</strong>
+            <span>직업별 기본 공격력이 다르고 성장 문구도 조금씩 다릅니다.</span>
           </div>
         </div>
       </div>
 
       <aside class="authCard" id="authCard">
         <div>
-          <h2>시작하기</h2>
-          <p class="small" style="margin-top:8px">최소 구조는 갖춘 상태라, 나중에 캐릭터, 아이템, 랭킹으로 확장하기 쉽습니다.</p>
+          <h2>모험 시작</h2>
+          <p class="small" style="margin-top:8px">회원가입 시 시작 직업을 고르면 해당 직업 기준으로 초기 능력치가 정해집니다.</p>
         </div>
         <div class="authTabs">
           <button class="tab active" id="loginTab">로그인</button>
@@ -327,8 +196,17 @@
           <input id="usernameInput" autocomplete="username" maxlength="24" placeholder="예: lilhwang" />
         </label>
         <label>비밀번호
-          <input id="passwordInput" type="password" autocomplete="current-password" maxlength="64" placeholder="8자 이상 권장" />
+          <input id="passwordInput" type="password" autocomplete="current-password" maxlength="64" placeholder="6자 이상" />
         </label>
+        <div id="jobSection" class="hidden">
+          <div class="small">시작 직업</div>
+          <div class="jobGrid">
+            <button class="jobCard active" data-job="swordsman"><strong>전사</strong><span>기본 공격력이 안정적이고 초반이 편합니다.</span></button>
+            <button class="jobCard" data-job="mage"><strong>마법사</strong><span>시작 화력이 높지만 강화 비용이 조금 더 큽니다.</span></button>
+            <button class="jobCard" data-job="priest"><strong>프리스트</strong><span>빛 속성 감성으로 천천히 단단하게 성장합니다.</span></button>
+            <button class="jobCard" data-job="thief"><strong>도적</strong><span>빠른 전투 템포와 민첩한 초반 진행 느낌입니다.</span></button>
+          </div>
+        </div>
         <div id="authStatus" class="status"></div>
         <button class="button" id="authButton">로그인</button>
       </aside>
@@ -339,33 +217,21 @@
         <div class="panelHead">
           <div>
             <h2 id="welcomeTitle">환영합니다</h2>
-            <p class="small">버튼을 눌러 밤샘 포인트를 모으고 가게를 키워보세요.</p>
+            <p id="jobDescription" class="small">필드에 나가 첫 몬스터를 상대할 준비를 마쳤습니다.</p>
           </div>
           <button class="ghost" id="logoutButton">로그아웃</button>
         </div>
 
         <div class="stats">
-          <div class="stat">
-            <strong>밤샘 포인트</strong>
-            <span id="coinsValue">0</span>
-          </div>
-          <div class="stat">
-            <strong>클릭 파워</strong>
-            <span id="powerValue">1</span>
-          </div>
-          <div class="stat">
-            <strong>총 클릭 수</strong>
-            <span id="clicksValue">0</span>
-          </div>
-          <div class="stat">
-            <strong>가게 레벨</strong>
-            <span id="levelValue">1</span>
-          </div>
+          <div class="stat"><strong>제니</strong><span id="coinsValue">0</span></div>
+          <div class="stat"><strong>공격력</strong><span id="powerValue">1</span></div>
+          <div class="stat"><strong>처치 수</strong><span id="clicksValue">0</span></div>
+          <div class="stat"><strong>레벨</strong><span id="levelValue">1</span></div>
         </div>
 
         <div class="playArea">
-          <button class="playButton" id="playButton">밤샘 굽기</button>
-          <p class="small">한 번 누를 때마다 포인트를 모읍니다. 업그레이드를 사면 클릭 효율이 커집니다.</p>
+          <button class="playButton" id="playButton">필드 사냥</button>
+          <p id="playFlavor" class="small">초보자 수련장에서 포링을 만나기 직전입니다.</p>
           <div id="gameStatus" class="status"></div>
         </div>
       </div>
@@ -373,82 +239,101 @@
       <aside class="panel">
         <div class="panelHead">
           <div>
-            <h2>업그레이드 가게</h2>
-            <p class="small">구매 내용도 함께 저장됩니다.</p>
+            <h2 id="storeTitle">장비 정비소</h2>
+            <p class="small">직업별 강화 이름이 달라집니다.</p>
           </div>
         </div>
-
         <div class="store">
           <div class="storeItem">
             <div>
-              <strong>좋은 오븐</strong>
-              <span>클릭 파워를 1 올립니다.</span>
+              <strong id="upgradeName">강철 검 연마</strong>
+              <span id="skillName">배쉬의 위력이 조금씩 강해집니다.</span>
             </div>
-            <div class="storeMeta">
-              <span>비용: <b id="upgradeCostValue">10</b></span>
-              <span>보유: <b id="upgradesValue">0</b></span>
-            </div>
-            <button class="button" id="upgradeButton">구매하기</button>
+            <div class="small">비용: <b id="upgradeCostValue">10</b> 제니 / 보유 강화: <b id="upgradesValue">0</b></div>
+            <button class="button" id="upgradeButton">강화하기</button>
           </div>
         </div>
-
-        <div class="actions">
+        <div class="actions" style="margin-top:14px">
           <button class="ghost" id="refreshButton">저장 데이터 새로고침</button>
           <button class="ghost" id="saveHintButton">구조 설명 보기</button>
         </div>
         <div id="saveHint" class="small hidden" style="margin-top:14px">
-          로그인 세션은 쿠키로 유지되고, 유저 정보와 게임 진행도는 서버 쪽 Durable Object 저장소에 보관됩니다.
+          로그인 세션은 쿠키로 유지되고, 유저 계정과 직업, 진행도는 Cloudflare Durable Object에 저장됩니다.
         </div>
       </aside>
     </section>
   </div>
 
   <script>
-    const authCard = document.getElementById('authCard');
-    const app = document.getElementById('app');
-    const loginTab = document.getElementById('loginTab');
-    const registerTab = document.getElementById('registerTab');
-    const usernameInput = document.getElementById('usernameInput');
-    const passwordInput = document.getElementById('passwordInput');
-    const authButton = document.getElementById('authButton');
-    const authStatus = document.getElementById('authStatus');
-    const gameStatus = document.getElementById('gameStatus');
-    const welcomeTitle = document.getElementById('welcomeTitle');
-    const playButton = document.getElementById('playButton');
-    const upgradeButton = document.getElementById('upgradeButton');
-    const refreshButton = document.getElementById('refreshButton');
-    const logoutButton = document.getElementById('logoutButton');
-    const saveHintButton = document.getElementById('saveHintButton');
-    const saveHint = document.getElementById('saveHint');
+    const JOBS = {
+      swordsman: { label: "전사", flavor: "무게감 있는 한 방으로 몬스터를 베어냅니다.", skill: "배쉬", upgrade: "강철 검 연마" },
+      mage: { label: "마법사", flavor: "짧은 주문으로 포링 무리를 태워버립니다.", skill: "파이어 볼트", upgrade: "마도서 증폭" },
+      priest: { label: "프리스트", flavor: "빛의 힘으로 언데드와 악마를 정화합니다.", skill: "홀리 라이트", upgrade: "축복 강화" },
+      thief: { label: "도적", flavor: "그림자처럼 접근해 빠르게 연속 타격을 넣습니다.", skill: "더블 어택", upgrade: "은신 단검 세공" }
+    };
 
-    const coinsValue = document.getElementById('coinsValue');
-    const powerValue = document.getElementById('powerValue');
-    const clicksValue = document.getElementById('clicksValue');
-    const levelValue = document.getElementById('levelValue');
-    const upgradesValue = document.getElementById('upgradesValue');
-    const upgradeCostValue = document.getElementById('upgradeCostValue');
+    const authCard = document.getElementById("authCard");
+    const app = document.getElementById("app");
+    const loginTab = document.getElementById("loginTab");
+    const registerTab = document.getElementById("registerTab");
+    const usernameInput = document.getElementById("usernameInput");
+    const passwordInput = document.getElementById("passwordInput");
+    const authButton = document.getElementById("authButton");
+    const authStatus = document.getElementById("authStatus");
+    const gameStatus = document.getElementById("gameStatus");
+    const welcomeTitle = document.getElementById("welcomeTitle");
+    const jobDescription = document.getElementById("jobDescription");
+    const playFlavor = document.getElementById("playFlavor");
+    const skillName = document.getElementById("skillName");
+    const upgradeName = document.getElementById("upgradeName");
+    const playButton = document.getElementById("playButton");
+    const upgradeButton = document.getElementById("upgradeButton");
+    const refreshButton = document.getElementById("refreshButton");
+    const logoutButton = document.getElementById("logoutButton");
+    const saveHintButton = document.getElementById("saveHintButton");
+    const saveHint = document.getElementById("saveHint");
+    const jobSection = document.getElementById("jobSection");
+    const jobCards = Array.from(document.querySelectorAll("[data-job]"));
 
-    let mode = 'login';
+    const coinsValue = document.getElementById("coinsValue");
+    const powerValue = document.getElementById("powerValue");
+    const clicksValue = document.getElementById("clicksValue");
+    const levelValue = document.getElementById("levelValue");
+    const upgradesValue = document.getElementById("upgradesValue");
+    const upgradeCostValue = document.getElementById("upgradeCostValue");
+
+    let mode = "login";
+    let selectedJob = "swordsman";
     let me = null;
     let state = null;
 
     function setMode(nextMode) {
       mode = nextMode;
-      loginTab.classList.toggle('active', nextMode === 'login');
-      registerTab.classList.toggle('active', nextMode === 'register');
-      authButton.textContent = nextMode === 'login' ? '로그인' : '회원가입';
-      authStatus.textContent = '';
-      authStatus.className = 'status';
+      loginTab.classList.toggle("active", nextMode === "login");
+      registerTab.classList.toggle("active", nextMode === "register");
+      authButton.textContent = nextMode === "login" ? "로그인" : "회원가입";
+      jobSection.classList.toggle("hidden", nextMode !== "register");
+      setStatus(authStatus, "");
     }
 
     function setStatus(target, message, type) {
-      target.textContent = message || '';
-      target.className = 'status' + (type ? ' ' + type : '');
+      target.textContent = message || "";
+      target.className = "status" + (type ? " " + type : "");
+    }
+
+    function selectJob(job) {
+      selectedJob = job;
+      jobCards.forEach((card) => card.classList.toggle("active", card.dataset.job === job));
     }
 
     function renderState() {
       if (!me || !state) return;
-      welcomeTitle.textContent = `${me.username}님의 밤샘 가게`;
+      const job = JOBS[state.jobClass] || JOBS.swordsman;
+      welcomeTitle.textContent = `${me.username} - ${job.label}`;
+      jobDescription.textContent = `${job.label}로 모험 중입니다. ${job.flavor}`;
+      playFlavor.textContent = `${job.skill}로 몬스터를 상대하며 제니를 모읍니다.`;
+      skillName.textContent = `${job.skill}의 위력이 조금씩 강해집니다.`;
+      upgradeName.textContent = job.upgrade;
       coinsValue.textContent = state.coins;
       powerValue.textContent = state.clickPower;
       clicksValue.textContent = state.totalClicks;
@@ -459,65 +344,57 @@
 
     async function api(path, options = {}) {
       const response = await fetch(path, {
-        credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json", ...(options.headers || {}) },
         ...options
       });
-
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(data.error || '요청 처리 중 문제가 발생했습니다.');
-      }
+      if (!response.ok) throw new Error(data.error || "요청 처리 중 문제가 발생했습니다.");
       return data;
     }
 
     async function loadSession() {
       try {
-        const data = await api('/api/me', { method: 'GET' });
+        const data = await api("/api/me", { method: "GET" });
         me = data.user;
         state = data.state;
-        authCard.style.display = 'none';
-        app.style.display = 'grid';
+        authCard.style.display = "none";
+        app.style.display = "grid";
         renderState();
-        setStatus(gameStatus, '저장된 데이터를 불러왔습니다.', 'good');
-      } catch (_error) {
+        setStatus(gameStatus, "저장된 모험 기록을 불러왔습니다.", "good");
+      } catch {
         me = null;
         state = null;
-        authCard.style.display = 'grid';
-        app.style.display = 'none';
+        authCard.style.display = "grid";
+        app.style.display = "none";
       }
     }
 
     async function handleAuth() {
       const username = usernameInput.value.trim();
       const password = passwordInput.value.trim();
-
-      if (username.length < 3) {
-        setStatus(authStatus, '아이디는 3자 이상으로 입력해 주세요.', 'error');
-        return;
-      }
-
-      if (password.length < 6) {
-        setStatus(authStatus, '비밀번호는 6자 이상으로 입력해 주세요.', 'error');
-        return;
-      }
+      if (username.length < 3) return setStatus(authStatus, "아이디는 3자 이상으로 입력해 주세요.", "error");
+      if (password.length < 6) return setStatus(authStatus, "비밀번호는 6자 이상이어야 합니다.", "error");
 
       authButton.disabled = true;
-      setStatus(authStatus, mode === 'login' ? '로그인 중...' : '계정 생성 중...');
-
+      setStatus(authStatus, mode === "login" ? "로그인 중..." : "캐릭터 생성 중...");
       try {
         const data = await api(`/api/${mode}`, {
-          method: 'POST',
-          body: JSON.stringify({ username, password })
+          method: "POST",
+          body: JSON.stringify({
+            username,
+            password,
+            jobClass: selectedJob
+          })
         });
         me = data.user;
         state = data.state;
+        authCard.style.display = "none";
+        app.style.display = "grid";
         renderState();
-        authCard.style.display = 'none';
-        app.style.display = 'grid';
-        setStatus(gameStatus, mode === 'login' ? '로그인되었습니다.' : '가입과 동시에 로그인되었습니다.', 'good');
+        setStatus(gameStatus, mode === "login" ? "로그인되었습니다." : "새 캐릭터가 생성되었습니다.", "good");
       } catch (error) {
-        setStatus(authStatus, error.message, 'error');
+        setStatus(authStatus, error.message, "error");
       } finally {
         authButton.disabled = false;
       }
@@ -525,57 +402,58 @@
 
     async function play() {
       try {
-        const data = await api('/api/game/click', { method: 'POST' });
+        const data = await api("/api/game/click", { method: "POST" });
         state = data.state;
         renderState();
-        setStatus(gameStatus, `포인트 +${data.gained}`, 'good');
+        setStatus(gameStatus, `${state.skillName}로 몬스터를 처치하고 ${data.gained} 제니를 얻었습니다.`, "good");
       } catch (error) {
-        setStatus(gameStatus, error.message, 'error');
+        setStatus(gameStatus, error.message, "error");
       }
     }
 
     async function buyUpgrade() {
       try {
-        const data = await api('/api/game/upgrade', { method: 'POST' });
+        const data = await api("/api/game/upgrade", { method: "POST" });
         state = data.state;
         renderState();
-        setStatus(gameStatus, '업그레이드를 구매했습니다.', 'good');
+        setStatus(gameStatus, `${state.upgradeName} 강화를 완료했습니다.`, "good");
       } catch (error) {
-        setStatus(gameStatus, error.message, 'error');
+        setStatus(gameStatus, error.message, "error");
       }
     }
 
     async function refreshState() {
       try {
-        const data = await api('/api/me', { method: 'GET' });
+        const data = await api("/api/me", { method: "GET" });
         me = data.user;
         state = data.state;
         renderState();
-        setStatus(gameStatus, '최신 저장 데이터를 불러왔습니다.', 'good');
+        setStatus(gameStatus, "최신 저장 데이터를 불러왔습니다.", "good");
       } catch (error) {
-        setStatus(gameStatus, error.message, 'error');
+        setStatus(gameStatus, error.message, "error");
       }
     }
 
     async function logout() {
-      await api('/api/logout', { method: 'POST' });
+      await api("/api/logout", { method: "POST" });
       me = null;
       state = null;
-      authCard.style.display = 'grid';
-      app.style.display = 'none';
-      usernameInput.value = '';
-      passwordInput.value = '';
-      setStatus(authStatus, '로그아웃되었습니다.', 'good');
+      authCard.style.display = "grid";
+      app.style.display = "none";
+      usernameInput.value = "";
+      passwordInput.value = "";
+      setStatus(authStatus, "로그아웃되었습니다.", "good");
     }
 
-    loginTab.addEventListener('click', () => setMode('login'));
-    registerTab.addEventListener('click', () => setMode('register'));
-    authButton.addEventListener('click', handleAuth);
-    playButton.addEventListener('click', play);
-    upgradeButton.addEventListener('click', buyUpgrade);
-    refreshButton.addEventListener('click', refreshState);
-    logoutButton.addEventListener('click', logout);
-    saveHintButton.addEventListener('click', () => saveHint.classList.toggle('hidden'));
+    loginTab.addEventListener("click", () => setMode("login"));
+    registerTab.addEventListener("click", () => setMode("register"));
+    jobCards.forEach((card) => card.addEventListener("click", () => selectJob(card.dataset.job)));
+    authButton.addEventListener("click", handleAuth);
+    playButton.addEventListener("click", play);
+    upgradeButton.addEventListener("click", buyUpgrade);
+    refreshButton.addEventListener("click", refreshState);
+    logoutButton.addEventListener("click", logout);
+    saveHintButton.addEventListener("click", () => saveHint.classList.toggle("hidden"));
 
     loadSession();
   </script>
