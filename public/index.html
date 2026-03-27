@@ -4,98 +4,106 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>릴황 온라인</title>
-  <meta name="description" content="오리지널 몬스터와 지역이 있는 로그인 기반 클래식 RPG 웹게임" />
+  <meta name="description" content="턴제 전투와 4스킬 시스템이 있는 클래식 RPG 웹게임" />
   <style>
     :root {
-      --bg:#120e17; --panel:rgba(31,24,40,.9); --panel-soft:rgba(51,41,65,.7); --line:rgba(255,255,255,.1);
+      --bg:#120e17; --panel:rgba(31,24,40,.92); --panel-soft:rgba(51,41,65,.72); --line:rgba(255,255,255,.1);
       --text:#f7eedf; --muted:#c3b8cc; --accent:#f1a85f; --gold:#ffd27a; --good:#83e0b5; --bad:#ff959a;
       --shadow:0 30px 80px rgba(0,0,0,.35);
     }
-    *{box-sizing:border-box} body{margin:0;min-height:100vh;color:var(--text);font-family:"Avenir Next","Helvetica Neue",sans-serif;
-      background:radial-gradient(circle at top left,rgba(241,168,95,.16),transparent 28%),radial-gradient(circle at top right,rgba(131,224,181,.08),transparent 20%),linear-gradient(180deg,#1a1320 0%,#0d0a11 100%)}
-    button,input{font:inherit} .shell{width:min(1180px,calc(100% - 24px));margin:0 auto;padding:20px 0 42px}
-    .hero,.panel{border:1px solid var(--line);border-radius:30px;background:var(--panel);backdrop-filter:blur(16px);box-shadow:var(--shadow)}
-    .hero{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(330px,.85fr);gap:18px;padding:24px;margin-bottom:18px}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;color:var(--text);font-family:"Avenir Next","Helvetica Neue",sans-serif;background:
+      radial-gradient(circle at top left,rgba(241,168,95,.16),transparent 28%),radial-gradient(circle at top right,rgba(131,224,181,.08),transparent 20%),linear-gradient(180deg,#1a1320 0%,#0d0a11 100%)}
+    button,input{font:inherit}
+    .shell{width:min(1200px,calc(100% - 24px));margin:0 auto;padding:20px 0 42px}
+    .hero,.panel,.overlayCard{border:1px solid var(--line);border-radius:30px;background:var(--panel);backdrop-filter:blur(16px);box-shadow:var(--shadow)}
+    .hero{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(330px,.9fr);gap:18px;padding:24px;margin-bottom:18px}
     .eyebrow{margin:0 0 10px;color:var(--gold);font-size:12px;font-weight:800;letter-spacing:.18em;text-transform:uppercase}
-    h1,h2,h3,p{margin:0} h1{font-size:clamp(2.7rem,6vw,5rem);line-height:.94;letter-spacing:-.05em}
+    h1,h2,h3,p{margin:0}
+    h1{font-size:clamp(2.7rem,6vw,5rem);line-height:.94;letter-spacing:-.05em}
     .lead{margin-top:16px;max-width:680px;color:var(--muted);line-height:1.8}
-    .tips,.authTabs,.jobGrid,.stats,.actions,.store,.areaGrid,.monsterFacts,.battleStage{display:grid;gap:12px}
+    .tips,.authTabs,.jobGrid,.stats,.actions,.store,.areaGrid,.battleStage,.skillGrid{display:grid;gap:12px}
     .tips{grid-template-columns:repeat(3,minmax(0,1fr));margin-top:22px}
-    .tip,.stat,.storeItem,.jobCard,.areaCard,.fact,.spriteCard{padding:16px;border:1px solid var(--line);border-radius:20px;background:var(--panel-soft)}
-    .tip strong,.stat strong,.storeItem strong,.jobCard strong,.areaCard strong,.fact strong{display:block;margin-bottom:6px}
-    .tip span,.stat span,.storeItem span,.jobCard span,.areaCard span,.fact span,.small{color:var(--muted);line-height:1.65;font-size:.94rem}
+    .tip,.stat,.storeItem,.jobCard,.areaCard,.spriteCard,.skillButton,.townCard{padding:16px;border:1px solid var(--line);border-radius:20px;background:var(--panel-soft)}
+    .tip strong,.stat strong,.storeItem strong,.jobCard strong,.areaCard strong,.spriteCard strong,.townCard strong{display:block;margin-bottom:6px}
+    .tip span,.stat span,.storeItem span,.jobCard span,.areaCard span,.small,.skillSub{color:var(--muted);line-height:1.65;font-size:.94rem}
     .authCard{display:grid;gap:14px;padding:18px;border:1px solid var(--line);border-radius:24px;background:rgba(17,13,23,.76)}
-    .authTabs,.actions{grid-template-columns:repeat(2,minmax(0,1fr))} .jobGrid{grid-template-columns:repeat(2,minmax(0,1fr))} .areaGrid{grid-template-columns:repeat(3,minmax(0,1fr))}
-    .tab,.button,.ghost,.jobCard,.playButton,.areaCard{transition:transform 160ms ease,border-color 160ms ease,background 160ms ease}
+    .authTabs,.actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .jobGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .areaGrid{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .tab,.button,.ghost,.jobCard,.areaCard,.skillButton{transition:transform 160ms ease,border-color 160ms ease,background 160ms ease}
     .tab,.button,.ghost{padding:12px 14px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.04);color:var(--text);cursor:pointer}
     .tab.active,.button{border-color:transparent;background:linear-gradient(135deg,var(--accent) 0%,#ff845d 100%);color:#30170d;font-weight:800}
-    .jobCard,.areaCard{text-align:left;cursor:pointer;background:rgba(255,255,255,.03)}
+    .jobCard,.areaCard,.skillButton{text-align:left;cursor:pointer;background:rgba(255,255,255,.03)}
     .jobCard.active,.areaCard.active{border-color:rgba(255,210,122,.6);background:linear-gradient(180deg,rgba(255,210,122,.16),rgba(255,255,255,.04))}
-    .areaCard.locked{opacity:.55}
-    .tab:hover,.button:hover,.ghost:hover,.jobCard:hover,.playButton:hover,.areaCard:hover{transform:translateY(-1px)}
-    label{display:grid;gap:6px;font-size:.93rem;color:var(--muted)} input{padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--text)}
+    .areaCard.locked,.skillButton:disabled{opacity:.55;cursor:not-allowed}
+    .tab:hover,.button:hover,.ghost:hover,.jobCard:hover,.areaCard:hover,.skillButton:hover{transform:translateY(-1px)}
+    label{display:grid;gap:6px;font-size:.93rem;color:var(--muted)}
+    input{padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--text)}
     .status{min-height:24px;font-size:.93rem;color:var(--gold)} .status.error{color:var(--bad)} .status.good{color:var(--good)}
-    .app{display:none;grid-template-columns:minmax(0,1.2fr) minmax(300px,.8fr);gap:18px} .panel{padding:22px}
-    .panelHead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px} .stats{grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:16px}
-    .playArea{display:grid;gap:14px;place-items:center;min-height:320px;padding:24px;border:1px solid var(--line);border-radius:26px;background:radial-gradient(circle at top,rgba(255,210,122,.16),transparent 26%),linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.02))}
-    .playButton{width:min(250px,70vw);aspect-ratio:1;border:none;border-radius:50%;cursor:pointer;color:#30170d;font-size:clamp(1.2rem,3vw,1.8rem);font-weight:900;letter-spacing:-.03em;background:radial-gradient(circle at 30% 30%,#fff2c9,#ffc66d 42%,#c46330 100%);box-shadow:inset 0 14px 30px rgba(255,255,255,.24),0 24px 50px rgba(0,0,0,.28)}
-    .monsterFacts,.battleStage{grid-template-columns:repeat(2,minmax(0,1fr));width:100%}
-    .spriteCard{display:grid;gap:12px;align-items:center;justify-items:center;min-height:260px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02))}
-    .spriteName{font-weight:800}
+    .app{display:none;grid-template-columns:minmax(0,1.2fr) minmax(320px,.8fr);gap:18px}
+    .panel{padding:22px}
+    .panelHead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+    .stats{grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:16px}
+    .battleStage{grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:14px}
+    .spriteCard{display:grid;gap:12px;align-items:center;justify-items:center;min-height:250px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02))}
     .spriteFigure{position:relative;width:160px;height:200px}
-    .spriteAsset{width:160px;height:200px;object-fit:contain;image-rendering:auto;display:none}
+    .spriteAsset{width:160px;height:200px;object-fit:contain;display:none}
     .spriteFigure.has-asset .spriteAsset{display:block}
-    .spriteFigure.has-asset .characterFigureParts,.spriteFigure.has-asset .monsterFigureParts{display:none}
-    .spriteGuide{font-size:.82rem;color:var(--muted);text-align:center;line-height:1.5}
-    .characterFigure .head,.characterFigure .body,.characterFigure .weapon,.characterFigure .aura,.monsterFigure .blob,.monsterFigure .eye{position:absolute}
+    .spriteFigure.has-asset .parts{display:none}
+    .parts .head,.parts .body,.parts .weapon,.parts .aura,.parts .blob,.parts .eye{position:absolute}
     .characterFigure .aura{left:16px;right:16px;bottom:8px;height:28px;border-radius:999px;background:rgba(255,210,122,.18);filter:blur(8px)}
-    .characterFigure .head{top:24px;left:52px;width:56px;height:56px;border-radius:50%;background:#f5d7b8;box-shadow:inset 0 -4px 0 rgba(0,0,0,.1)}
+    .characterFigure .head{top:24px;left:52px;width:56px;height:56px;border-radius:50%;background:#f5d7b8}
     .characterFigure .body{top:76px;left:40px;width:80px;height:84px;border-radius:22px 22px 16px 16px;background:#7a879a}
-    .characterFigure .weapon{top:70px;right:18px;width:16px;height:94px;border-radius:999px;background:#d2b06e;transform:rotate(18deg);transform-origin:center top}
-    .characterFigure.swordsman .body{background:#8f6e56}
-    .characterFigure.swordsman .weapon{background:linear-gradient(180deg,#f6e3b2,#a0a9bf)}
-    .characterFigure.mage .body{background:#6b57b8}
-    .characterFigure.mage .weapon{background:linear-gradient(180deg,#f0da9d,#805ef3)}
-    .characterFigure.priest .body{background:#d9d2c1}
-    .characterFigure.priest .weapon{background:linear-gradient(180deg,#fff3c6,#caa55f)}
-    .characterFigure.thief .body{background:#4b6464}
-    .characterFigure.thief .weapon{background:linear-gradient(180deg,#c8d7d3,#7baea4)}
+    .characterFigure .weapon{top:70px;right:18px;width:16px;height:94px;border-radius:999px;background:#d2b06e;transform:rotate(18deg)}
+    .characterFigure.swordsman .body{background:#8f6e56}.characterFigure.swordsman .weapon{background:linear-gradient(180deg,#f6e3b2,#a0a9bf)}
+    .characterFigure.mage .body{background:#6b57b8}.characterFigure.mage .weapon{background:linear-gradient(180deg,#f0da9d,#805ef3)}
+    .characterFigure.priest .body{background:#d9d2c1}.characterFigure.priest .weapon{background:linear-gradient(180deg,#fff3c6,#caa55f)}
+    .characterFigure.thief .body{background:#4b6464}.characterFigure.thief .weapon{background:linear-gradient(180deg,#c8d7d3,#7baea4)}
     .monsterFigure .blob{left:24px;right:24px;bottom:22px;top:44px;border-radius:52px 52px 38px 38px;background:linear-gradient(180deg,#f29eb3,#b25c82)}
     .monsterFigure .eye{top:92px;width:14px;height:14px;border-radius:50%;background:#24131a}
     .monsterFigure .eye.left{left:48px}.monsterFigure .eye.right{right:48px}
-    .monsterFigure .blob:after{content:"";position:absolute;left:26px;right:26px;bottom:-12px;height:20px;border-radius:50%;background:rgba(0,0,0,.12)}
-    .hidden{display:none!important}
-    @media (max-width:920px){.hero,.app,.tips,.authTabs,.jobGrid,.stats,.actions,.areaGrid,.monsterFacts,.battleStage{grid-template-columns:1fr}.shell{width:min(100% - 16px,100%)}}
+    .hpBar{width:100%;height:12px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}
+    .hpFill{height:100%;background:linear-gradient(90deg,#ff8b6b,#ffd27a)}
+    .skillGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .skillButton{min-height:96px}
+    .skillTitle{display:block;font-weight:800;margin-bottom:4px}
+    .townCard{margin-top:14px}
+    .overlay{position:fixed;inset:0;background:rgba(9,7,13,.72);display:none;align-items:center;justify-content:center;padding:18px;z-index:50}
+    .overlay.show{display:flex}
+    .overlayCard{width:min(560px,100%);padding:22px}
+    .replaceList{display:grid;gap:10px;margin-top:14px}
+    @media (max-width:920px){.hero,.app,.tips,.authTabs,.jobGrid,.stats,.actions,.areaGrid,.battleStage,.skillGrid{grid-template-columns:1fr}.shell{width:min(100% - 16px,100%)}}
   </style>
 </head>
 <body>
   <div class="shell">
     <section class="hero">
       <div>
-        <p class="eyebrow">Classic Fantasy Web RPG</p>
+        <p class="eyebrow">Turn Based RPG</p>
         <h1>릴황 온라인</h1>
-        <p class="lead">라그나로크풍의 정서를 참고하되, 몬스터와 지역은 모두 오리지널로 만든 초반 MMORPG 감성 웹게임입니다. 계정을 만들고 직업을 고른 뒤, 필드를 옮겨 다니며 몬스터를 처치하고 제니와 경험치를 모으세요.</p>
+        <p class="lead">이제 전투는 턴제로 진행됩니다. 최대 4개의 스킬을 장착하고, 새 스킬을 배우면 기존 스킬 중 무엇을 지울지 직접 선택해야 합니다. 몬스터의 반격을 버티지 못하면 마을로 돌아가 회복한 뒤 다시 출발해야 합니다.</p>
         <div class="tips">
-          <div class="tip"><strong>직업 선택</strong><span>전사, 마법사, 프리스트, 도적 중 하나로 시작합니다.</span></div>
-          <div class="tip"><strong>지역 이동</strong><span>초원, 숲, 지하묘지로 확장되며 레벨 조건이 있습니다.</span></div>
-          <div class="tip"><strong>오리지널 몬스터</strong><span>듀마루, 핑키볼, 바쿠른, 셰이드클로 같은 몬스터가 등장합니다.</span></div>
+          <div class="tip"><strong>4 스킬 제한</strong><span>항상 최대 4개까지만 장착 가능합니다.</span></div>
+          <div class="tip"><strong>턴제 반격</strong><span>내가 행동하면 몬스터도 공격합니다.</span></div>
+          <div class="tip"><strong>마을 회복</strong><span>전투가 힘들면 마을에서 회복하고 다시 떠나세요.</span></div>
         </div>
       </div>
       <aside class="authCard" id="authCard">
-        <div><h2>모험 시작</h2><p class="small" style="margin-top:8px">회원가입 시 시작 직업을 고르면 해당 직업 기준으로 초기 능력치가 정해집니다.</p></div>
+        <div><h2>모험 시작</h2><p class="small" style="margin-top:8px">회원가입 시 시작 직업을 고르면 초기 스킬 세트도 함께 정해집니다.</p></div>
         <div class="authTabs">
           <button class="tab active" id="loginTab">로그인</button>
           <button class="tab" id="registerTab">회원가입</button>
         </div>
-        <label>아이디<input id="usernameInput" autocomplete="username" maxlength="24" placeholder="예: lilhwang" /></label>
-        <label>비밀번호<input id="passwordInput" type="password" autocomplete="current-password" maxlength="64" placeholder="6자 이상" /></label>
+        <label>아이디<input id="usernameInput" maxlength="24" placeholder="예: lilhwang" /></label>
+        <label>비밀번호<input id="passwordInput" type="password" maxlength="64" placeholder="6자 이상" /></label>
         <div id="jobSection" class="hidden">
           <div class="small">시작 직업</div>
           <div class="jobGrid">
-            <button class="jobCard active" data-job="swordsman"><strong>전사</strong><span>안정적 공격력과 무난한 초반 성장.</span></button>
-            <button class="jobCard" data-job="mage"><strong>마법사</strong><span>높은 화력으로 몬스터를 빨리 정리.</span></button>
-            <button class="jobCard" data-job="priest"><strong>프리스트</strong><span>성스러운 분위기의 꾸준한 성장.</span></button>
-            <button class="jobCard" data-job="thief"><strong>도적</strong><span>민첩하고 빠른 템포의 사냥.</span></button>
+            <button class="jobCard active" data-job="swordsman"><strong>전사</strong><span>근접 공격과 가드가 안정적입니다.</span></button>
+            <button class="jobCard" data-job="mage"><strong>마법사</strong><span>강한 주문 위주로 빠르게 전투를 끝냅니다.</span></button>
+            <button class="jobCard" data-job="priest"><strong>프리스트</strong><span>회복과 방어가 섞인 안전한 운영입니다.</span></button>
+            <button class="jobCard" data-job="thief"><strong>도적</strong><span>기동성과 공격 리듬이 빠른 편입니다.</span></button>
           </div>
         </div>
         <div id="authStatus" class="status"></div>
@@ -108,93 +116,108 @@
         <div class="panelHead">
           <div>
             <h2 id="welcomeTitle">환영합니다</h2>
-            <p id="jobDescription" class="small">필드에 나가 첫 몬스터를 상대할 준비를 마쳤습니다.</p>
+            <p id="battleLog" class="small">전투를 시작할 준비를 마쳤습니다.</p>
           </div>
           <button class="ghost" id="logoutButton">로그아웃</button>
         </div>
+
         <div class="stats">
-          <div class="stat"><strong>제니</strong><span id="coinsValue">0</span></div>
-          <div class="stat"><strong>공격력</strong><span id="powerValue">1</span></div>
+          <div class="stat"><strong>체력</strong><span id="hpValue">0 / 0</span></div>
           <div class="stat"><strong>레벨 / 경험치</strong><span id="levelValue">1 / 0</span></div>
-          <div class="stat"><strong>처치 수</strong><span id="clicksValue">0</span></div>
-          <div class="stat"><strong>현재 지역</strong><span id="areaValue">루미 메도우</span></div>
-          <div class="stat"><strong>현재 몬스터</strong><span id="monsterName">듀마루</span></div>
+          <div class="stat"><strong>제니</strong><span id="coinsValue">0</span></div>
+          <div class="stat"><strong>공격 보정</strong><span id="bonusValue">0</span></div>
         </div>
-        <div class="playArea">
-          <div class="battleStage">
-            <div class="spriteCard">
-              <div class="spriteName" id="characterName">모험가</div>
-              <div class="spriteFigure characterFigure swordsman" id="characterFigure">
-                <img class="spriteAsset" id="characterAsset" alt="character sprite" src="/assets/characters/swordsman.png" />
-                <div class="characterFigureParts">
-                  <div class="aura"></div>
-                  <div class="head"></div>
-                  <div class="body"></div>
-                  <div class="weapon"></div>
-                </div>
+
+        <div class="battleStage">
+          <div class="spriteCard">
+            <strong id="characterName">모험가</strong>
+            <div class="spriteFigure characterFigure swordsman" id="characterFigure">
+              <img class="spriteAsset" id="characterAsset" alt="character sprite" src="/assets/characters/swordsman.png" />
+              <div class="parts">
+                <div class="aura"></div><div class="head"></div><div class="body"></div><div class="weapon"></div>
               </div>
-              <div class="small" id="characterFlavor">초보 장비를 갖추고 첫 사냥에 나설 준비를 마쳤습니다.</div>
-              <div class="spriteGuide">권장 캐릭터 PNG 규격: 160x200 또는 320x400, 투명 배경</div>
             </div>
-            <div class="spriteCard">
-              <div class="spriteName" id="monsterCardName">듀마루</div>
-              <div class="spriteFigure monsterFigure">
-                <img class="spriteAsset" id="monsterAsset" alt="monster sprite" src="/assets/monsters/default.png" />
-                <div class="monsterFigureParts">
-                  <div class="blob"></div>
-                  <div class="eye left"></div>
-                  <div class="eye right"></div>
-                </div>
+            <div class="small" id="characterFlavor">스킬을 고를 준비를 합니다.</div>
+            <div class="hpBar"><div class="hpFill" id="heroHpFill" style="width:100%"></div></div>
+          </div>
+
+          <div class="spriteCard">
+            <strong id="monsterName">듀마루</strong>
+            <div class="spriteFigure monsterFigure" id="monsterFigure">
+              <img class="spriteAsset" id="monsterAsset" alt="monster sprite" src="/assets/monsters/default.png" />
+              <div class="parts">
+                <div class="blob"></div><div class="eye left"></div><div class="eye right"></div>
               </div>
-              <div class="small" id="monsterCardFlavor">이슬을 머금은 둥근 젤리 몬스터</div>
-              <div class="spriteGuide">권장 몬스터 PNG 규격: 160x200 또는 320x400, 투명 배경</div>
             </div>
+            <div class="small" id="monsterFlavor">초원에서 만난 첫 몬스터입니다.</div>
+            <div class="hpBar"><div class="hpFill" id="monsterHpFill" style="width:100%"></div></div>
           </div>
-          <button class="playButton" id="playButton">필드 사냥</button>
-          <p id="playFlavor" class="small">초보자 수련장에서 첫 몬스터를 만날 준비를 하고 있습니다.</p>
-          <div class="monsterFacts">
-            <div class="fact"><strong>몬스터 분위기</strong><span id="monsterVibe">이슬을 머금은 둥근 젤리 몬스터</span></div>
-            <div class="fact"><strong>남은 HP</strong><span id="monsterHp">10 / 10</span></div>
-            <div class="fact"><strong>획득 제니</strong><span id="monsterReward">3</span></div>
-            <div class="fact"><strong>획득 경험치</strong><span id="monsterExp">4</span></div>
-          </div>
-          <div id="gameStatus" class="status"></div>
         </div>
+
+        <div class="skillGrid" id="skillGrid"></div>
       </div>
 
       <aside class="panel">
         <div class="panelHead">
           <div>
-            <h2 id="storeTitle">사냥터와 장비</h2>
-            <p class="small">지역 이동과 직업별 강화를 함께 관리합니다.</p>
+            <h2>필드 관리</h2>
+            <p class="small">사냥터, 마을, 장비를 관리합니다.</p>
           </div>
         </div>
+
+        <div class="stats" style="margin-bottom:14px">
+          <div class="stat"><strong>현재 지역</strong><span id="areaValue">루미 메도우</span></div>
+          <div class="stat"><strong>현재 몬스터 HP</strong><span id="monsterHpValue">0 / 0</span></div>
+          <div class="stat"><strong>강화 횟수</strong><span id="upgradeCountValue">0</span></div>
+          <div class="stat"><strong>강화 비용</strong><span id="upgradeCostValue">0</span></div>
+        </div>
+
         <div class="areaGrid" id="areaGrid"></div>
-        <div class="store" style="margin-top:14px">
+
+        <div class="store">
           <div class="storeItem">
-            <div>
-              <strong id="upgradeName">강철 검 연마</strong>
-              <span id="skillName">배쉬의 위력이 조금씩 강해집니다.</span>
-            </div>
-            <div class="small">비용: <b id="upgradeCostValue">10</b> 제니 / 보유 강화: <b id="upgradesValue">0</b></div>
+            <strong>장비 정비</strong>
+            <span>공격 보정이 높아지고 전투가 조금 편해집니다.</span>
             <button class="button" id="upgradeButton">강화하기</button>
           </div>
         </div>
-        <div class="actions" style="margin-top:14px">
-          <button class="ghost" id="refreshButton">저장 데이터 새로고침</button>
-          <button class="ghost" id="saveHintButton">구조 설명 보기</button>
+
+        <div class="townCard">
+          <strong>마을</strong>
+          <span id="townStatus">필드에 나가 있습니다.</span>
+          <div class="actions" style="margin-top:12px">
+            <button class="ghost" id="townButton">마을로 돌아가기</button>
+            <button class="ghost" id="healButton">휴식하기</button>
+          </div>
+          <div class="actions" style="margin-top:12px">
+            <button class="button" id="adventureButton">다시 출발하기</button>
+            <button class="ghost" id="refreshButton">새로고침</button>
+          </div>
         </div>
-        <div id="saveHint" class="small hidden" style="margin-top:14px">로그인 세션은 쿠키로 유지되고, 유저 계정과 직업, 지역, 현재 몬스터, 진행도는 Cloudflare Durable Object에 저장됩니다.</div>
       </aside>
     </section>
   </div>
 
+  <div class="overlay" id="replaceOverlay">
+    <div class="overlayCard">
+      <h2>새 스킬 습득</h2>
+      <p class="small" id="replaceText" style="margin-top:8px">교체할 스킬을 골라 주세요.</p>
+      <div class="replaceList" id="replaceList"></div>
+    </div>
+  </div>
+
   <script>
     const JOBS = {
-      swordsman: { label: "전사", flavor: "무게감 있는 일격으로 필드를 밀어붙입니다.", skill: "배쉬", upgrade: "강철 검 연마" },
-      mage: { label: "마법사", flavor: "속성 주문으로 적을 빠르게 정리합니다.", skill: "파이어 볼트", upgrade: "마도서 증폭" },
-      priest: { label: "프리스트", flavor: "빛의 힘으로 위험한 적을 정화합니다.", skill: "홀리 라이트", upgrade: "축복 강화" },
-      thief: { label: "도적", flavor: "그림자처럼 접근해 빠르게 마무리합니다.", skill: "더블 어택", upgrade: "은신 단검 세공" }
+      swordsman: { label: "전사", flavor: "무게감 있는 한 방으로 전선을 밀어붙입니다." },
+      mage: { label: "마법사", flavor: "강한 속성 공격으로 전투를 빠르게 끝냅니다." },
+      priest: { label: "프리스트", flavor: "빛의 힘과 회복으로 전투를 오래 버팁니다." },
+      thief: { label: "도적", flavor: "빠르고 예리한 연속 공격으로 적을 흔듭니다." }
+    };
+    const characterAssetPaths = {
+      swordsman: "/assets/characters/swordsman.png",
+      mage: "/assets/characters/mage.png",
+      priest: "/assets/characters/priest.png",
+      thief: "/assets/characters/thief.png"
     };
 
     const authCard = document.getElementById("authCard");
@@ -205,51 +228,45 @@
     const passwordInput = document.getElementById("passwordInput");
     const authButton = document.getElementById("authButton");
     const authStatus = document.getElementById("authStatus");
-    const gameStatus = document.getElementById("gameStatus");
-    const welcomeTitle = document.getElementById("welcomeTitle");
-    const jobDescription = document.getElementById("jobDescription");
-    const playFlavor = document.getElementById("playFlavor");
-    const skillName = document.getElementById("skillName");
-    const upgradeName = document.getElementById("upgradeName");
-    const playButton = document.getElementById("playButton");
-    const upgradeButton = document.getElementById("upgradeButton");
-    const refreshButton = document.getElementById("refreshButton");
     const logoutButton = document.getElementById("logoutButton");
-    const saveHintButton = document.getElementById("saveHintButton");
-    const saveHint = document.getElementById("saveHint");
-    const jobSection = document.getElementById("jobSection");
-    const jobCards = Array.from(document.querySelectorAll("[data-job]"));
-    const areaGrid = document.getElementById("areaGrid");
+    const welcomeTitle = document.getElementById("welcomeTitle");
+    const battleLog = document.getElementById("battleLog");
     const characterName = document.getElementById("characterName");
+    const characterFlavor = document.getElementById("characterFlavor");
     const characterFigure = document.getElementById("characterFigure");
     const characterAsset = document.getElementById("characterAsset");
-    const characterFlavor = document.getElementById("characterFlavor");
-    const monsterCardName = document.getElementById("monsterCardName");
-    const monsterAsset = document.getElementById("monsterAsset");
-    const monsterCardFlavor = document.getElementById("monsterCardFlavor");
-    const coinsValue = document.getElementById("coinsValue");
-    const powerValue = document.getElementById("powerValue");
-    const levelValue = document.getElementById("levelValue");
-    const clicksValue = document.getElementById("clicksValue");
-    const areaValue = document.getElementById("areaValue");
+    const heroHpFill = document.getElementById("heroHpFill");
     const monsterName = document.getElementById("monsterName");
-    const monsterVibe = document.getElementById("monsterVibe");
-    const monsterHp = document.getElementById("monsterHp");
-    const monsterReward = document.getElementById("monsterReward");
-    const monsterExp = document.getElementById("monsterExp");
-    const upgradesValue = document.getElementById("upgradesValue");
+    const monsterFlavor = document.getElementById("monsterFlavor");
+    const monsterFigure = document.getElementById("monsterFigure");
+    const monsterAsset = document.getElementById("monsterAsset");
+    const monsterHpFill = document.getElementById("monsterHpFill");
+    const hpValue = document.getElementById("hpValue");
+    const levelValue = document.getElementById("levelValue");
+    const coinsValue = document.getElementById("coinsValue");
+    const bonusValue = document.getElementById("bonusValue");
+    const skillGrid = document.getElementById("skillGrid");
+    const areaValue = document.getElementById("areaValue");
+    const monsterHpValue = document.getElementById("monsterHpValue");
+    const upgradeCountValue = document.getElementById("upgradeCountValue");
     const upgradeCostValue = document.getElementById("upgradeCostValue");
+    const areaGrid = document.getElementById("areaGrid");
+    const upgradeButton = document.getElementById("upgradeButton");
+    const townStatus = document.getElementById("townStatus");
+    const townButton = document.getElementById("townButton");
+    const healButton = document.getElementById("healButton");
+    const adventureButton = document.getElementById("adventureButton");
+    const refreshButton = document.getElementById("refreshButton");
+    const replaceOverlay = document.getElementById("replaceOverlay");
+    const replaceText = document.getElementById("replaceText");
+    const replaceList = document.getElementById("replaceList");
+    const jobSection = document.getElementById("jobSection");
+    const jobCards = Array.from(document.querySelectorAll("[data-job]"));
 
     let mode = "login";
     let selectedJob = "swordsman";
     let me = null;
     let state = null;
-    const characterAssetPaths = {
-      swordsman: "/assets/characters/swordsman.png",
-      mage: "/assets/characters/mage.png",
-      priest: "/assets/characters/priest.png",
-      thief: "/assets/characters/thief.png"
-    };
 
     function setMode(nextMode) {
       mode = nextMode;
@@ -265,10 +282,10 @@
       target.className = "status" + (type ? " " + type : "");
     }
 
-    function selectJob(job) {
-      selectedJob = job;
-      jobCards.forEach((card) => card.classList.toggle("active", card.dataset.job === job));
-      updateCharacterPreview(job);
+    function selectJob(jobKey) {
+      selectedJob = jobKey;
+      jobCards.forEach((card) => card.classList.toggle("active", card.dataset.job === jobKey));
+      updateCharacterPreview(jobKey);
     }
 
     function bindSpriteFallback(imgEl, figureEl) {
@@ -281,8 +298,19 @@
     }
 
     function updateCharacterPreview(jobKey) {
-      characterAsset.src = characterAssetPaths[jobKey] || characterAssetPaths.swordsman;
       characterFigure.className = `spriteFigure characterFigure ${jobKey}`;
+      characterAsset.src = characterAssetPaths[jobKey] || characterAssetPaths.swordsman;
+    }
+
+    async function api(path, options = {}) {
+      const response = await fetch(path, {
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+        ...options
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "요청 처리 중 문제가 발생했습니다.");
+      return data;
     }
 
     function renderAreas() {
@@ -299,54 +327,77 @@
       });
     }
 
+    function renderSkills() {
+      if (!state) return;
+      skillGrid.innerHTML = state.skills.map((skill) => `
+        <button class="skillButton" data-skill="${skill.id}" ${state.inTown || state.hp <= 0 ? "disabled" : ""}>
+          <span class="skillTitle">${skill.name}</span>
+          <span class="skillSub">${skill.text}</span>
+        </button>
+      `).join("");
+      skillGrid.querySelectorAll("[data-skill]").forEach((button) => {
+        button.addEventListener("click", () => useSkill(button.dataset.skill));
+      });
+    }
+
+    function renderReplacePrompt() {
+      if (!state?.pendingSkill) {
+        replaceOverlay.classList.remove("show");
+        return;
+      }
+      replaceText.textContent = `${state.pendingSkill.name}을(를) 배울 수 있습니다. 어떤 스킬을 잊게 할까요?`;
+      replaceList.innerHTML = state.skills.map((skill) => `
+        <button class="skillButton" data-replace="${skill.id}">
+          <span class="skillTitle">${skill.name}</span>
+          <span class="skillSub">${skill.text}</span>
+        </button>
+      `).join("");
+      replaceList.querySelectorAll("[data-replace]").forEach((button) => {
+        button.addEventListener("click", () => replaceSkill(button.dataset.replace));
+      });
+      replaceOverlay.classList.add("show");
+    }
+
     function renderState() {
       if (!me || !state) return;
       const job = JOBS[state.jobClass] || JOBS.swordsman;
       welcomeTitle.textContent = `${me.username} - ${job.label}`;
-      jobDescription.textContent = `${job.label}로 모험 중입니다. ${job.flavor}`;
+      battleLog.textContent = state.battleLog || `${job.label}의 여정을 계속합니다.`;
       characterName.textContent = `${me.username} / ${job.label}`;
+      characterFlavor.textContent = job.flavor;
       updateCharacterPreview(state.jobClass);
-      characterFlavor.textContent = `${job.skill} 준비 완료. ${job.flavor}`;
-      playFlavor.textContent = `${state.area.name}에서 ${state.currentMonster.name}을(를) 상대 중입니다. ${state.currentMonster.vibe}.`;
-      skillName.textContent = `${state.skillName}의 위력이 조금씩 강해집니다.`;
-      upgradeName.textContent = state.upgradeName;
-      coinsValue.textContent = state.coins;
-      powerValue.textContent = state.clickPower;
-      levelValue.textContent = `${state.level} / ${state.exp} EXP`;
-      clicksValue.textContent = state.totalClicks;
-      areaValue.textContent = state.area.name;
       monsterName.textContent = state.currentMonster.name;
-      monsterCardName.textContent = state.currentMonster.name;
-      monsterVibe.textContent = state.currentMonster.vibe;
-      monsterCardFlavor.textContent = state.currentMonster.vibe;
+      monsterFlavor.textContent = state.currentMonster.vibe;
       monsterAsset.src = `/assets/monsters/${state.currentMonster.key}.png`;
-      monsterHp.textContent = `${state.monsterHp} / ${state.currentMonster.hp}`;
-      monsterReward.textContent = state.currentMonster.reward;
-      monsterExp.textContent = state.currentMonster.exp;
-      upgradesValue.textContent = state.upgrades;
+      hpValue.textContent = `${state.hp} / ${state.maxHp}`;
+      levelValue.textContent = `${state.level} / ${state.exp} EXP`;
+      coinsValue.textContent = state.coins;
+      bonusValue.textContent = `${state.attackBonus} / 방어 ${state.shield}`;
+      areaValue.textContent = state.area.name;
+      monsterHpValue.textContent = `${state.monsterHp} / ${state.currentMonster.maxHp}`;
+      upgradeCountValue.textContent = state.upgrades;
       upgradeCostValue.textContent = state.upgradeCost;
+      heroHpFill.style.width = `${Math.max(0, Math.min(100, (state.hp / Math.max(1, state.maxHp)) * 100))}%`;
+      monsterHpFill.style.width = `${Math.max(0, Math.min(100, (state.monsterHp / Math.max(1, state.currentMonster.maxHp)) * 100))}%`;
+      townStatus.textContent = state.inTown ? "현재 마을에 있습니다." : "현재 필드에 나가 있습니다.";
       renderAreas();
-    }
-
-    async function api(path, options = {}) {
-      const response = await fetch(path, {
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json", ...(options.headers || {}) },
-        ...options
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || "요청 처리 중 문제가 발생했습니다.");
-      return data;
+      renderSkills();
+      renderReplacePrompt();
     }
 
     async function loadSession() {
       try {
         const data = await api("/api/me", { method: "GET" });
-        me = data.user; state = data.state;
-        authCard.style.display = "none"; app.style.display = "grid";
-        renderState(); setStatus(gameStatus, "저장된 모험 기록을 불러왔습니다.", "good");
+        me = data.user;
+        state = data.state;
+        authCard.style.display = "none";
+        app.style.display = "grid";
+        renderState();
       } catch {
-        me = null; state = null; authCard.style.display = "grid"; app.style.display = "none";
+        me = null;
+        state = null;
+        authCard.style.display = "grid";
+        app.style.display = "none";
       }
     }
 
@@ -362,9 +413,11 @@
           method: "POST",
           body: JSON.stringify({ username, password, jobClass: selectedJob })
         });
-        me = data.user; state = data.state;
-        authCard.style.display = "none"; app.style.display = "grid";
-        renderState(); setStatus(gameStatus, mode === "login" ? "로그인되었습니다." : "새 캐릭터가 생성되었습니다.", "good");
+        me = data.user;
+        state = data.state;
+        authCard.style.display = "none";
+        app.style.display = "grid";
+        renderState();
       } catch (error) {
         setStatus(authStatus, error.message, "error");
       } finally {
@@ -372,50 +425,91 @@
       }
     }
 
-    async function play() {
+    async function useSkill(skillId) {
       try {
-        const data = await api("/api/game/click", { method: "POST" });
-        state = data.state; renderState();
-        setStatus(gameStatus, data.message || `${state.skillName}이 적중했습니다.`, data.defeated ? "good" : "");
+        const data = await api("/api/game/use-skill", { method: "POST", body: JSON.stringify({ skillId }) });
+        state = data.state;
+        renderState();
       } catch (error) {
-        setStatus(gameStatus, error.message, "error");
+        battleLog.textContent = error.message;
       }
     }
 
-    async function buyUpgrade() {
+    async function replaceSkill(replaceSkillId) {
       try {
-        const data = await api("/api/game/upgrade", { method: "POST" });
-        state = data.state; renderState();
-        setStatus(gameStatus, `${state.upgradeName} 강화를 완료했습니다.`, "good");
+        const data = await api("/api/game/replace-skill", { method: "POST", body: JSON.stringify({ replaceSkillId }) });
+        state = data.state;
+        renderState();
       } catch (error) {
-        setStatus(gameStatus, error.message, "error");
+        battleLog.textContent = error.message;
       }
     }
 
     async function changeArea(areaKey) {
       try {
         const data = await api("/api/game/area", { method: "POST", body: JSON.stringify({ areaKey }) });
-        state = data.state; renderState();
-        setStatus(gameStatus, `${state.area.name}(으)로 이동했습니다.`, "good");
+        state = data.state;
+        renderState();
       } catch (error) {
-        setStatus(gameStatus, error.message, "error");
+        battleLog.textContent = error.message;
+      }
+    }
+
+    async function upgrade() {
+      try {
+        const data = await api("/api/game/upgrade", { method: "POST" });
+        state = data.state;
+        renderState();
+      } catch (error) {
+        battleLog.textContent = error.message;
+      }
+    }
+
+    async function goTown() {
+      try {
+        const data = await api("/api/game/town", { method: "POST" });
+        state = data.state;
+        renderState();
+      } catch (error) {
+        battleLog.textContent = error.message;
+      }
+    }
+
+    async function heal() {
+      try {
+        const data = await api("/api/game/heal", { method: "POST" });
+        state = data.state;
+        renderState();
+      } catch (error) {
+        battleLog.textContent = error.message;
+      }
+    }
+
+    async function adventure() {
+      try {
+        const data = await api("/api/game/adventure", { method: "POST" });
+        state = data.state;
+        renderState();
+      } catch (error) {
+        battleLog.textContent = error.message;
       }
     }
 
     async function refreshState() {
-      try {
-        const data = await api("/api/me", { method: "GET" });
-        me = data.user; state = data.state; renderState();
-        setStatus(gameStatus, "최신 저장 데이터를 불러왔습니다.", "good");
-      } catch (error) {
-        setStatus(gameStatus, error.message, "error");
-      }
+      const data = await api("/api/me", { method: "GET" });
+      me = data.user;
+      state = data.state;
+      renderState();
     }
 
     async function logout() {
       await api("/api/logout", { method: "POST" });
-      me = null; state = null; authCard.style.display = "grid"; app.style.display = "none";
-      usernameInput.value = ""; passwordInput.value = "";
+      me = null;
+      state = null;
+      authCard.style.display = "grid";
+      app.style.display = "none";
+      usernameInput.value = "";
+      passwordInput.value = "";
       setStatus(authStatus, "로그아웃되었습니다.", "good");
     }
 
@@ -423,15 +517,16 @@
     registerTab.addEventListener("click", () => setMode("register"));
     jobCards.forEach((card) => card.addEventListener("click", () => selectJob(card.dataset.job)));
     authButton.addEventListener("click", handleAuth);
-    playButton.addEventListener("click", play);
-    upgradeButton.addEventListener("click", buyUpgrade);
-    refreshButton.addEventListener("click", refreshState);
     logoutButton.addEventListener("click", logout);
-    saveHintButton.addEventListener("click", () => saveHint.classList.toggle("hidden"));
-    bindSpriteFallback(characterAsset, characterFigure);
-    bindSpriteFallback(monsterAsset, monsterAsset.parentElement);
-    updateCharacterPreview(selectedJob);
+    upgradeButton.addEventListener("click", upgrade);
+    townButton.addEventListener("click", goTown);
+    healButton.addEventListener("click", heal);
+    adventureButton.addEventListener("click", adventure);
+    refreshButton.addEventListener("click", refreshState);
 
+    bindSpriteFallback(characterAsset, characterFigure);
+    bindSpriteFallback(monsterAsset, monsterFigure);
+    updateCharacterPreview(selectedJob);
     loadSession();
   </script>
 </body>
