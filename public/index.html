@@ -40,14 +40,18 @@
     .playArea{display:grid;gap:14px;place-items:center;min-height:320px;padding:24px;border:1px solid var(--line);border-radius:26px;background:radial-gradient(circle at top,rgba(255,210,122,.16),transparent 26%),linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.02))}
     .playButton{width:min(250px,70vw);aspect-ratio:1;border:none;border-radius:50%;cursor:pointer;color:#30170d;font-size:clamp(1.2rem,3vw,1.8rem);font-weight:900;letter-spacing:-.03em;background:radial-gradient(circle at 30% 30%,#fff2c9,#ffc66d 42%,#c46330 100%);box-shadow:inset 0 14px 30px rgba(255,255,255,.24),0 24px 50px rgba(0,0,0,.28)}
     .monsterFacts,.battleStage{grid-template-columns:repeat(2,minmax(0,1fr));width:100%}
-    .spriteCard{display:grid;gap:12px;align-items:center;justify-items:center;min-height:220px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02))}
+    .spriteCard{display:grid;gap:12px;align-items:center;justify-items:center;min-height:260px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02))}
     .spriteName{font-weight:800}
-    .spriteFigure{position:relative;width:120px;height:150px}
+    .spriteFigure{position:relative;width:160px;height:200px}
+    .spriteAsset{width:160px;height:200px;object-fit:contain;image-rendering:auto;display:none}
+    .spriteFigure.has-asset .spriteAsset{display:block}
+    .spriteFigure.has-asset .characterFigureParts,.spriteFigure.has-asset .monsterFigureParts{display:none}
+    .spriteGuide{font-size:.82rem;color:var(--muted);text-align:center;line-height:1.5}
     .characterFigure .head,.characterFigure .body,.characterFigure .weapon,.characterFigure .aura,.monsterFigure .blob,.monsterFigure .eye{position:absolute}
-    .characterFigure .aura{left:12px;right:12px;bottom:4px;height:24px;border-radius:999px;background:rgba(255,210,122,.18);filter:blur(8px)}
-    .characterFigure .head{top:18px;left:38px;width:44px;height:44px;border-radius:50%;background:#f5d7b8;box-shadow:inset 0 -4px 0 rgba(0,0,0,.1)}
-    .characterFigure .body{top:58px;left:28px;width:64px;height:68px;border-radius:18px 18px 14px 14px;background:#7a879a}
-    .characterFigure .weapon{top:52px;right:12px;width:14px;height:76px;border-radius:999px;background:#d2b06e;transform:rotate(18deg);transform-origin:center top}
+    .characterFigure .aura{left:16px;right:16px;bottom:8px;height:28px;border-radius:999px;background:rgba(255,210,122,.18);filter:blur(8px)}
+    .characterFigure .head{top:24px;left:52px;width:56px;height:56px;border-radius:50%;background:#f5d7b8;box-shadow:inset 0 -4px 0 rgba(0,0,0,.1)}
+    .characterFigure .body{top:76px;left:40px;width:80px;height:84px;border-radius:22px 22px 16px 16px;background:#7a879a}
+    .characterFigure .weapon{top:70px;right:18px;width:16px;height:94px;border-radius:999px;background:#d2b06e;transform:rotate(18deg);transform-origin:center top}
     .characterFigure.swordsman .body{background:#8f6e56}
     .characterFigure.swordsman .weapon{background:linear-gradient(180deg,#f6e3b2,#a0a9bf)}
     .characterFigure.mage .body{background:#6b57b8}
@@ -56,10 +60,10 @@
     .characterFigure.priest .weapon{background:linear-gradient(180deg,#fff3c6,#caa55f)}
     .characterFigure.thief .body{background:#4b6464}
     .characterFigure.thief .weapon{background:linear-gradient(180deg,#c8d7d3,#7baea4)}
-    .monsterFigure .blob{left:18px;right:18px;bottom:18px;top:34px;border-radius:42px 42px 34px 34px;background:linear-gradient(180deg,#f29eb3,#b25c82)}
-    .monsterFigure .eye{top:74px;width:12px;height:12px;border-radius:50%;background:#24131a}
-    .monsterFigure .eye.left{left:38px}.monsterFigure .eye.right{right:38px}
-    .monsterFigure .blob:after{content:"";position:absolute;left:22px;right:22px;bottom:-10px;height:18px;border-radius:50%;background:rgba(0,0,0,.12)}
+    .monsterFigure .blob{left:24px;right:24px;bottom:22px;top:44px;border-radius:52px 52px 38px 38px;background:linear-gradient(180deg,#f29eb3,#b25c82)}
+    .monsterFigure .eye{top:92px;width:14px;height:14px;border-radius:50%;background:#24131a}
+    .monsterFigure .eye.left{left:48px}.monsterFigure .eye.right{right:48px}
+    .monsterFigure .blob:after{content:"";position:absolute;left:26px;right:26px;bottom:-12px;height:20px;border-radius:50%;background:rgba(0,0,0,.12)}
     .hidden{display:none!important}
     @media (max-width:920px){.hero,.app,.tips,.authTabs,.jobGrid,.stats,.actions,.areaGrid,.monsterFacts,.battleStage{grid-template-columns:1fr}.shell{width:min(100% - 16px,100%)}}
   </style>
@@ -121,21 +125,29 @@
             <div class="spriteCard">
               <div class="spriteName" id="characterName">모험가</div>
               <div class="spriteFigure characterFigure swordsman" id="characterFigure">
-                <div class="aura"></div>
-                <div class="head"></div>
-                <div class="body"></div>
-                <div class="weapon"></div>
+                <img class="spriteAsset" id="characterAsset" alt="character sprite" src="/assets/characters/swordsman.png" />
+                <div class="characterFigureParts">
+                  <div class="aura"></div>
+                  <div class="head"></div>
+                  <div class="body"></div>
+                  <div class="weapon"></div>
+                </div>
               </div>
               <div class="small" id="characterFlavor">초보 장비를 갖추고 첫 사냥에 나설 준비를 마쳤습니다.</div>
+              <div class="spriteGuide">권장 캐릭터 PNG 규격: 160x200 또는 320x400, 투명 배경</div>
             </div>
             <div class="spriteCard">
               <div class="spriteName" id="monsterCardName">듀마루</div>
               <div class="spriteFigure monsterFigure">
-                <div class="blob"></div>
-                <div class="eye left"></div>
-                <div class="eye right"></div>
+                <img class="spriteAsset" id="monsterAsset" alt="monster sprite" src="/assets/monsters/default.png" />
+                <div class="monsterFigureParts">
+                  <div class="blob"></div>
+                  <div class="eye left"></div>
+                  <div class="eye right"></div>
+                </div>
               </div>
               <div class="small" id="monsterCardFlavor">이슬을 머금은 둥근 젤리 몬스터</div>
+              <div class="spriteGuide">권장 몬스터 PNG 규격: 160x200 또는 320x400, 투명 배경</div>
             </div>
           </div>
           <button class="playButton" id="playButton">필드 사냥</button>
@@ -210,8 +222,10 @@
     const areaGrid = document.getElementById("areaGrid");
     const characterName = document.getElementById("characterName");
     const characterFigure = document.getElementById("characterFigure");
+    const characterAsset = document.getElementById("characterAsset");
     const characterFlavor = document.getElementById("characterFlavor");
     const monsterCardName = document.getElementById("monsterCardName");
+    const monsterAsset = document.getElementById("monsterAsset");
     const monsterCardFlavor = document.getElementById("monsterCardFlavor");
     const coinsValue = document.getElementById("coinsValue");
     const powerValue = document.getElementById("powerValue");
@@ -230,6 +244,12 @@
     let selectedJob = "swordsman";
     let me = null;
     let state = null;
+    const characterAssetPaths = {
+      swordsman: "/assets/characters/swordsman.png",
+      mage: "/assets/characters/mage.png",
+      priest: "/assets/characters/priest.png",
+      thief: "/assets/characters/thief.png"
+    };
 
     function setMode(nextMode) {
       mode = nextMode;
@@ -248,6 +268,21 @@
     function selectJob(job) {
       selectedJob = job;
       jobCards.forEach((card) => card.classList.toggle("active", card.dataset.job === job));
+      updateCharacterPreview(job);
+    }
+
+    function bindSpriteFallback(imgEl, figureEl) {
+      imgEl.addEventListener("load", () => {
+        if (imgEl.naturalWidth > 0) figureEl.classList.add("has-asset");
+      });
+      imgEl.addEventListener("error", () => {
+        figureEl.classList.remove("has-asset");
+      });
+    }
+
+    function updateCharacterPreview(jobKey) {
+      characterAsset.src = characterAssetPaths[jobKey] || characterAssetPaths.swordsman;
+      characterFigure.className = `spriteFigure characterFigure ${jobKey}`;
     }
 
     function renderAreas() {
@@ -270,7 +305,7 @@
       welcomeTitle.textContent = `${me.username} - ${job.label}`;
       jobDescription.textContent = `${job.label}로 모험 중입니다. ${job.flavor}`;
       characterName.textContent = `${me.username} / ${job.label}`;
-      characterFigure.className = `spriteFigure characterFigure ${state.jobClass}`;
+      updateCharacterPreview(state.jobClass);
       characterFlavor.textContent = `${job.skill} 준비 완료. ${job.flavor}`;
       playFlavor.textContent = `${state.area.name}에서 ${state.currentMonster.name}을(를) 상대 중입니다. ${state.currentMonster.vibe}.`;
       skillName.textContent = `${state.skillName}의 위력이 조금씩 강해집니다.`;
@@ -284,6 +319,7 @@
       monsterCardName.textContent = state.currentMonster.name;
       monsterVibe.textContent = state.currentMonster.vibe;
       monsterCardFlavor.textContent = state.currentMonster.vibe;
+      monsterAsset.src = `/assets/monsters/${state.currentMonster.key}.png`;
       monsterHp.textContent = `${state.monsterHp} / ${state.currentMonster.hp}`;
       monsterReward.textContent = state.currentMonster.reward;
       monsterExp.textContent = state.currentMonster.exp;
@@ -392,6 +428,9 @@
     refreshButton.addEventListener("click", refreshState);
     logoutButton.addEventListener("click", logout);
     saveHintButton.addEventListener("click", () => saveHint.classList.toggle("hidden"));
+    bindSpriteFallback(characterAsset, characterFigure);
+    bindSpriteFallback(monsterAsset, monsterAsset.parentElement);
+    updateCharacterPreview(selectedJob);
 
     loadSession();
   </script>
