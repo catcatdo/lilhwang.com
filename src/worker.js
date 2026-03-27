@@ -490,20 +490,46 @@ export class GameDatabase {
       userId
     );
     if (!row) return null;
+    let skills = safeJson(row.skillsJson, []);
+    let pendingSkill = safeJson(row.pendingSkillJson, null);
+    const job = JOBS[row.jobClass] || JOBS.swordsman;
+    let shouldRepair = false;
+    if (!Array.isArray(skills) || skills.length === 0) {
+      skills = getStarterSkills(row.jobClass);
+      shouldRepair = true;
+    }
+    if (!row.maxHp || row.maxHp <= 0) {
+      row.maxHp = job.maxHp;
+      shouldRepair = true;
+    }
+    if (row.hp == null || row.hp < 0) {
+      row.hp = row.maxHp;
+      shouldRepair = true;
+    }
+    if (!row.currentMonsterKey || !MONSTERS[row.currentMonsterKey]) {
+      const repairedMonster = getMonsterForArea(row.areaKey || "meadow", row.totalTurns || 0);
+      row.currentMonsterKey = repairedMonster.key;
+      row.monsterHp = repairedMonster.maxHp;
+      shouldRepair = true;
+    }
     const area = AREAS[row.areaKey] || AREAS.meadow;
     const monster = MONSTERS[row.currentMonsterKey] || MONSTERS.dew_maru;
-    return {
+    const state = {
       ...row,
       inTown: Boolean(row.inTown),
-      skills: safeJson(row.skillsJson, []),
-      pendingSkill: safeJson(row.pendingSkillJson, null),
+      skills,
+      pendingSkill,
       area,
       areas: Object.values(AREAS).map((entry) => ({ ...entry, unlocked: row.level >= entry.minLevel })),
       currentMonster: { key: row.currentMonsterKey, ...monster },
-      jobLabel: JOBS[row.jobClass]?.label || "전사",
+      jobLabel: job.label,
       expToNext: expForLevel(row.level + 1),
       upgradeCost: getUpgradeCost(row.upgrades),
     };
+    if (shouldRepair) {
+      this.persistState(userId, state);
+    }
+    return state;
   }
 
   persistState(userId, next) {
